@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "name": "webgl-examples",
+  "version": "0.0.0",
+  "main": "./src/index.js",
+  "repository": "https://github.com/woopen/webgl-examples",
+  "author": "wopen <nepow@foxmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "webpack serve --config ./scripts/webpack.dev.js",
+    "build": "webpack --config ./scripts/webpack.prod.js --progress"
+  },
+  "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "html-webpack-plugin": "^5.3.1",
+    "webpack": "^5.37.1",
+    "webpack-cli": "^4.7.0",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^5.7.3"
+  }
+}

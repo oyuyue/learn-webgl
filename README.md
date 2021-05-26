@@ -1,1 +1,1 @@
-# webgl-examples
+# WebGL Examples
