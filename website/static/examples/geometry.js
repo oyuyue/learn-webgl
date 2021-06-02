@@ -1,3 +1,7 @@
+class Geometry {
+
+}
+
 function createSphere() {
 
 }

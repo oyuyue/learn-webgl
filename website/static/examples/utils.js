@@ -1,3 +1,8 @@
+class Program {
+  constructor() {}
+}
+
+
 function createCanvas(append = true) {
   const canvas = document.createElement('canvas')
   canvas.width = 800
