@@ -1,14 +1,14 @@
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  title: 'Learn WebGL',
+  tagline: 'WebGL are cool',
+  url: 'https://woopen.github.io',
+  baseUrl: '/learn-webgl/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'woopen', // Usually your GitHub org/user name.
+  projectName: 'learn-webgl', // Usually your repo name.
   themeConfig: {
     navbar: {
       title: 'My Site',
@@ -29,7 +29,7 @@ module.exports = {
           label: 'Examples',
         },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/woopen/learn-webgl',
           label: 'GitHub',
           position: 'right',
         },
@@ -67,10 +67,6 @@ module.exports = {
         {
           title: 'More',
           items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
             {
               label: 'GitHub',
               href: 'https://github.com/facebook/docusaurus',

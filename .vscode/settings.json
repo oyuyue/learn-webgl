@@ -6,6 +6,7 @@
     "Phong",
     "Rasterization",
     "compat",
+    "mediump",
     "opengl",
     "webgl",
     "woopen"

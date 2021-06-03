@@ -18,7 +18,7 @@ const gl = (
 
 ![](/img/webgl-compat.png)
 
-大多数浏览器都支持 WebGL1。也有很多现代浏览器支持 WebGL2，但是苹果还不支持 WebGL2，所以编写 WebGL 程序的时，需要向下降级到 WebGL1。
+大多数浏览器都支持 WebGL1。也有很多现代浏览器支持 WebGL2，但是苹果还不支持 WebGL2，所以编写 WebGL 程序时，需要向下降级到 WebGL1。
 
 ![](/img/webgl2-compat.png)
 
