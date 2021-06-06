@@ -81,3 +81,5 @@ gl.drawArrays( // 从数组中绘制图元
     3 // 需要用到多少个点
 )
 ```
+
+![image](https://user-images.githubusercontent.com/25923128/120929285-0d881a80-c71b-11eb-82fe-4813aeb0609e.png)

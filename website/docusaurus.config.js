@@ -10,8 +10,13 @@ module.exports = {
   organizationName: 'woopen', // Usually your GitHub org/user name.
   projectName: 'learn-webgl', // Usually your repo name.
   themeConfig: {
+    colorMode: {
+      defaultMode: 'dark',
+    },
+    hideableSidebar: true,
     navbar: {
-      title: 'My Site',
+      title: 'Learn WebGL',
+      hideOnScroll: true,
       logo: {
         alt: 'My Site Logo',
         src: 'img/logo.svg',
@@ -21,12 +26,12 @@ module.exports = {
           type: 'doc',
           docId: 'intro',
           position: 'left',
-          label: 'Tutorial',
+          label: '教程',
         },
         {
           to: '/examples',
           position: 'left',
-          label: 'Examples',
+          label: '例子',
         },
         {
           href: 'https://github.com/woopen/learn-webgl',
@@ -51,16 +56,8 @@ module.exports = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
               label: 'Discord',
               href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
             },
           ],
         },
@@ -69,12 +66,12 @@ module.exports = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/woopen/learn-webgl',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} <a target="_blank" rel="noopener noreferrer" href="https://github.com/woopen">wopen</a>`,
     },
   },
   presets: [

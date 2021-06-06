@@ -5,6 +5,7 @@
     "Khronos",
     "Phong",
     "Rasterization",
+    "arccos",
     "compat",
     "mediump",
     "opengl",
