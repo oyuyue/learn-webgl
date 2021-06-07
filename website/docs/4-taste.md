@@ -2,9 +2,15 @@
 
 在实现编写代码之前，需要知道 WebGL 只是一个光栅化引擎，它非常底层，它只能用它来画点，线和三角形，那些复杂的 3D 模型都是由一个个三角形组成。只要愿意我们可以使用 canvas 2d 来实现 3D 效果。
 
-![image](https://user-images.githubusercontent.com/25923128/120994009-ad46b680-c7b6-11eb-82cf-9fed33463719.png)
+[![image](https://user-images.githubusercontent.com/25923128/120994009-ad46b680-c7b6-11eb-82cf-9fed33463719.png)](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5)
 
-比如上方这辆汽车模型，它其实是由 267300 个三角形组成。可以点击这个链接查看这个模型详情 [https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5) 。
+比如上方这辆汽车模型，它其实是由 267300 个三角形组成。
+
+可以点击这个链接查看这个模型详情 [https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5) 。
+
+可能有同学会问了，为什么就是三角形，而不是 5 边形，6 边形呢？
+
+因为三角形有很多的优势，比如三角形一定在一个平面上，任何多边形都可以使用三角形组成等性值。
 
 ## 防走样
 
@@ -86,7 +92,7 @@ gl.clear(gl.COLOR_BUFFER_BIT) // 清空颜色缓冲区，也就是清空画布
 gl.drawArrays( // 从数组中绘制图元
     gl.TRIANGLES, // 渲染三角形
     0,  // 从数组中哪个点开始渲染
-    3   // 需要用到多少个点
+    3   // 需要用到多少个点，三角形的三个顶点
 )
 ```
 
@@ -94,7 +100,19 @@ gl.drawArrays( // 从数组中绘制图元
 
 ![image](https://user-images.githubusercontent.com/25923128/120929285-0d881a80-c71b-11eb-82fe-4813aeb0609e.png)
 
-可见 WebGL 的代码非常繁琐，一个简单的三角形就需要编写这么多的代码。
+可见 WebGL 的代码非常繁琐，一个简单的三角形就需要编写这么多的代码。下面将一步步的分析上面的代码。
+
+首先我们需要知道 WebGL 就是一个非常大的状态机，它提供的方法都是改变 WebGL 的某个状态。
+
+我们需要在 CPU 中使用 JS 设置 WebGL 的状态，准备数据和着色器程序，然后发送给 GPU 执行。
+
+上方代码可以分为如下几步。
+
+1. 因为 WebGL 的坐标是 -1 到 1，所以首先我们使用 `viewport` 设置视口大小信息。
+2. 创建顶点和片段着色器（关于着色器情况[下篇文章](/5-shader.md)），然后创建一个程序，来连接顶点和片段着色器。
+3. 然后获取着色器中的变量，设置如何将值传递给着色器。三角形是由 3 个顶点组成，所以准备了 3 个点的坐标。
+4. 设置清屏颜色，并清屏，**WebGL 中的颜色是 0 到 1，而不是 0 到 255**。
+5. 渲染三角形
 
 ## 代码优化
 

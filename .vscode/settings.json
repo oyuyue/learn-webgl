@@ -9,6 +9,7 @@
     "compat",
     "mediump",
     "opengl",
+    "rgba",
     "webgl",
     "woopen"
   ]
