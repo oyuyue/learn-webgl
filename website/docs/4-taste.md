@@ -12,8 +12,6 @@
 
 因为三角形有很多的优势，比如三角形一定在一个平面上，任何多边形都可以使用三角形组成等性值。
 
-## 防走样
-
 ## 三角形
 
 现在就让我们从最简单图形开始吧，渲染一个三角形。
@@ -114,6 +112,28 @@ gl.drawArrays( // 从数组中绘制图元
 4. 设置清屏颜色，并清屏，**WebGL 中的颜色是 0 到 1，而不是 0 到 255**。
 5. 渲染三角形
 
-## 代码优化
+关于着色器的部分将在[下一篇文章](/5-shader.md)中讲解。
 
+## High DPI
 
+每次都创建 canvas，获取 WebGL 上下文非常麻烦，这里就创建一个 `createGl` 方法，以后都直接用该方法获取 WebGL 上下文。 
+
+```js
+export function createGl(width = 500, height = 500) {
+  const canvas = document.createElement('canvas')
+  const gl = canvas.getContext('gl')
+  const dpr = window.devicePixelRatio || 1
+
+  canvas.style.width = `${width}px`
+  canvas.style.height = `${height}px`
+  canvas.width = dpr * width
+  canvas.height = dpr * height
+  gl.viewport(0, 0, canvas.width, canvas.height)
+
+  document.body.append(canvas)
+  return gl
+}
+```
+
+在高清屏上我们渲染的图形可能会模糊，这是因为 CSS 像素和实际像素不一致，例如在 DPR 为 2 的屏幕上 100px 的 css 像素，实际占用 200px。
+所以我们需要将 canvas 设置为 `dpr * css size` 的大小。

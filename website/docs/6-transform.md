@@ -6,9 +6,11 @@ canvas.width = canvas.height = 300;
 document.body.appendChild(canvas)
 const ctx = canvas.getContext('2d')
 
-const points = [[0,0],[0,100],[100,100],[100,0]]
+const points = [[0,0],[0,100],[100,100],[100,0]] // 正方形的 4 个顶点
 ctx.beginPath()
-points.forEach(p => ctx.lineTo(...transform(p))) // `transform` 函数为下方小节指定的变换函数
+points.forEach(p => ctx.lineTo(...transform(p))) 
+// "transform" 函数为下方小节指定的变换函数
+// 下面的 "transform" 函数返回新的坐标位置
 ctx.closePath()
 ctx.fillStyle='rgba(0,255,255,1)'
 ctx.fill()

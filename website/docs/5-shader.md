@@ -135,11 +135,7 @@ GLSL 帮我们设置了一些默认变量精度。顶点着色器中 `int` 和 `
 ## 立方体
 
 ```js
-const canvas = document.createElement('canvas')
-canvas.width = canvas.height = 300
-document.body.appendChild(canvas)
-const gl = canvas.getContext('webgl')
-gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+const gl = createGl()
 
 const program = createProgramFromSource(gl, `
 attribute vec4 aPos;
