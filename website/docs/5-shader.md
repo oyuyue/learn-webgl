@@ -112,6 +112,26 @@ float f = float(1);
 
 ### 精度限定字
 
+精度限定字用来控制数值的精度，越高的精度也就意味着更慢的性能，所以我们要合理的控制程序的精度。GLSL 中有三种精度 `highp`、`mediump` 和 `lowp`，分别是高、中和低精度。
+
+```c
+mediump float size; // 声明一个中精度浮点数
+highp int len; // 声明一个高精度整数
+lowp vec4 v; // 低精度矢量
+```
+
+这样一个一个的变量声明，非常麻烦，我们还可以一次性声明。
+
+```c
+precision mediump float; // 浮点数全部使用中精度
+```
+
+GLSL 帮我们设置了一些默认变量精度。顶点着色器中 `int` 和 `float` 都是 `highp`。
+
+片元着色器中 `int` 是 `mediump`，`float` 没有定义。这也就是为什么上面片元着色器中第一行代码是 `precision mediump float;` 了，因为 OpenGL 没有设置默认值，所以必须得我们自己设置。
+
+另外 `sampler2D` 和 `samplerCube` 都是 `lowp`（它们主要用来渲染图片，后面会详细讲解）。
+
 ## 立方体
 
 ```js
@@ -209,5 +229,12 @@ function createAttrBuffer(gl, program, attr, data) {
 ```
 
 ### varying 存储限定字
+
+存储限定字其实一共有三个 `attribute`、`uniform` 和 `varying`。上面已经介绍了前两个，它们都是从外部 JS 获取数据。
+
+`varying` 有点特殊，它用于从顶点着色器向片元着色器传送数据。上面例子中我们将 aColor 赋值给 vColor，然后在片元着色器中就可以使用 vColor 了。
+叫 varying 也是有原因的，我们可以先来看看上面代码最终渲染成什么样子。
+
+
 
 ## 总结
