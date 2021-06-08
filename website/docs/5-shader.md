@@ -232,8 +232,8 @@ function createAttrBuffer(gl, program, attr, data) {
 
 存储限定字其实一共有三个 `attribute`、`uniform` 和 `varying`。上面已经介绍了前两个，它们都是从外部 JS 获取数据。
 
-`varying` 有点特殊，它用于从顶点着色器向片元着色器传送数据。上面例子中我们将 aColor 赋值给 vColor，然后在片元着色器中就可以使用 vColor 了。
-叫 varying 也是有原因的，我们可以先来看看上面代码最终渲染成什么样子。
+`varying` 有点特殊，它用于从顶点着色器向片元着色器传送数据。上面例子中我们将 `aColor` 赋值给 `vColor`，然后在片元着色器中就可以使用 `vColor` 了。
+叫 `varying` 也是有原因的，我们可以先来看看上面代码最终渲染成什么样子。
 
 ![image](https://user-images.githubusercontent.com/25923128/121116065-8cc73c80-c848-11eb-9baf-c3ec87765ca1.png)
 
