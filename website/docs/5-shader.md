@@ -134,6 +134,12 @@ GLSL 帮我们设置了一些默认变量精度。顶点着色器中 `int` 和 `
 
 ## 立方体
 
+学习了着色器相关知识，现在再来渲染一个 3D 立方体吧。
+
+立方体一共有 6 个面，一个面可以用两个三角形组成，也就是一个立方体需要 12 个三角形，36 个顶点！
+
+然而实际上立方体其实只需要 8 个顶点就行了，因为一个顶点可以被多个面复用。在 WebGL 中其实也可以复用顶点。
+
 ```js
 const gl = createGl()
 
@@ -158,12 +164,14 @@ void main() {
 const points = new Float32Array([
   -0.5,0.5,-0.5, 0.5,0.5,-0.5, 0.5,-0.5,-0.5, -0.5,-0.5,-0.5,
   0.5,0.5,0.5, -0.5,0.5,0.5, -0.5,-0.5,0.5, 0.5,-0.5,0.5
+  // 立方体的 8 个顶点
 ])
 const colors = new Float32Array([
   1,0,0, 0,1,0, 0,0,1, 1,0,1,
   0,0,0, 0,0,0, 0,0,0, 0,0,0
+  // 每个顶点的颜色
 ])
-const indices = new Uint8Array([
+const indices = new Uint8Array([ // 面的索引，值是 points 的下标
   0, 1, 2, 0, 2, 3, // 前
   1, 4, 2, 4, 7, 2, // 右
   4, 5, 6, 4, 6, 7, // 后
@@ -223,6 +231,12 @@ function createAttrBuffer(gl, program, attr, data) {
   return [location, buffer]
 }
 ```
+
+要实现复用顶点，需要使用顶点索引，这样 WebGL 就可以通过索引找到对应顶点，因为索引下标都是整数且最大为 7 （因为只有 8 个顶点），所以这里使用了 `Uint8Array`。
+
+然后创建 Buffer 来存放这些索引，和其他 `attribute` 数据不同，索引数据的绑定目标是 `ELEMENT_ARRAY_BUFFER`。
+
+上面代码中，我们没有使用 `drawArrays`，而是使用 `drawElements`。 它们的主要区别是 `drawArrays` 是根据 `ARRAY_BUFFER` 来渲染，`drawElements` 是根据 `ELEMENT_ARRAY_BUFFER` 来渲染（根据索引来渲染）。
 
 ### varying 存储限定字
 
