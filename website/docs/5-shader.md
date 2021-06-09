@@ -92,7 +92,9 @@ gl.uniform4f(colorLocation, 0.93, 0, 0.56, 1)
 
 ## GLSL
 
-OpenGL 的着色器使用 GLSL(OpenGL Shading Language) 语言进行编写，它有点像 C 语言。在 OpenGL ES 和 WebGL 中使用的是 GLSL ES。
+OpenGL 的着色器使用 GLSL(OpenGL Shading Language) 语言进行编写，它有点像 C 语言。在 OpenGL ES 和 WebGL 中使用的是 GLSL ES。WebGL1 中使用的 GLSL 1.00 版本。下面简单介绍 GLSL 的语法，更详细文档请点击下方链接。
+
+[https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf](https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf)
 
 它是强类型语言，每一句都必须有分号。它和 JS 语法也挺像。
 
@@ -107,6 +109,13 @@ float f = float(1);
 ### 矢量和矩阵
 
 ### 分支和循环
+
+```js
+if (true) {} else if (true) {} else {}
+for (int i = 0; i < 3; i++) {
+	continue; // 或 break
+}
+```
 
 ### 函数
 
