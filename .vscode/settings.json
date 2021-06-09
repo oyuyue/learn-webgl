@@ -7,6 +7,8 @@
     "Rasterization",
     "arccos",
     "compat",
+    "highp",
+    "lowp",
     "mediump",
     "opengl",
     "rgba",
