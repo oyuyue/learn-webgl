@@ -27,6 +27,13 @@ class Program {
       throw new Error(gl.getProgramInfoLog(this.program))
     }
 
+    const numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES)
+    this.attributeMap = new Map()
+    for (let i = 0; i < numAttribs; i++) {
+      const attribute = gl.getActiveAttrib(this.program, i)
+      const loc = gl.getAttribLocation(this.program, attribute)
+      this.attributeMap.set(attribute, loc)
+    }
   }
 
   use() {
@@ -43,10 +50,43 @@ class PlaneGeometry extends Geometry {
     super()
     this.drawRange = { start: 0, count: 0 }
     this.attributes = createPlane()
+
+    Object.keys(this.attributes).forEach((k) => {
+      const item = this.attributes[k]
+      item.count = item.count || (item.stride ? item.data.byteLength / item.stride : item.data.length / item.size)
+      item.buffer = gl.createBuffer()
+      gl.bindBuffer(item.target, item.buffer)
+      gl.bufferData(item.target, item.data, gl.STATIC_DRAW)
+
+      if (key === 'index') {
+        this.drawRange.count = item.count
+      } else if (!this.attributes.index) {
+        this.drawRange.count = Math.max(this.drawRange.count, item.count)
+      }
+    })
   }
 
-  draw(renderer) {
-    
+  draw(renderer, program) {
+    const gl = renderer.gl
+
+    program.attributeMap.forEach((loc, { name }) => {
+      const item = this.attributes[name]
+      if (!item) throw new Error(`Cannot found attribute ${name} in geometry`)
+
+      gl.bindBuffer(item.target, item.buffer)
+      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(loc)
+    })
+
+    if (this.attributes.index) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.attributes.index.buffer)
+    }
+
+    if (this.attributes.index) {
+      gl.drawElements()
+    } else {
+      gl.drawArrays()
+    }
   }
 }
 
@@ -54,6 +94,10 @@ class Mesh {
   constructor(geometry, program) {
     this.geometry = geometry
     this.program = program
+  }
+
+  draw() {
+    
   }
 }
 
@@ -122,7 +166,7 @@ function createGeometryResult(
   normalSize = 3,
   uvSize = 2,
 ) {
-  const res = {}
+  const res = Object.create(null)
 
   if (position) res.position = { size: positionSize, data: position, target: 0x8892 }
   if (normal) res.normal = { size: normalSize, data: normal, target: 0x8892 }
