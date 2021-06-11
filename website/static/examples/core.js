@@ -154,6 +154,7 @@ class Node {
     this.scale = new Vec3(1)
     this.up = new Vec3(0, 1, 0)
 
+    this.matrix = new Mat4()
     this.worldMatrix = new Mat4()
   }
 
