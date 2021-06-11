@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earth</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <script src="../core.js"></script>
+  <script src="../math.js"></script>
+  <script>
+    const renderer = new Renderer()
+    const plane = new PlaneGeometry()
+    const program = new Program(renderer, {
+      vs: `
+        attribute vec4 position;
+
+        void main() {
+          gl_Position = position;
+        }
+      `,
+      fs: `
+        precision highp float;
+
+        void main() {
+          gl_FragColor = vec4(0, 1, 1, 1);
+        }
+      `
+    })
+
+    const mesh = new Mesh(plane, program)
+    const scene = new Scene()
+    scene.add(mesh)
+
+    renderer.render(scene)
+  </script>
+</body>
+</html>

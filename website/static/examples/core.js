@@ -4,18 +4,19 @@ class Renderer {
   }
 
   render(scene) {
-
+    this.gl.clearColor(1, 1, 1, 1)
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT)
+    scene.children.forEach(mesh => {
+      mesh.draw(this)
+    })
   }
 }
 
-class Scene {
-  constructor() {}
-}
-
 class Program {
-  constructor(renderer, { vs, fs } = {}) {
+  constructor(renderer, { vs, fs, uniforms = {} } = {}) {
     this.renderer = renderer
     const gl = renderer.gl
+    this.uniforms = uniforms
 
     const v = createShader(gl, gl.VERTEX_SHADER, vs)
     const f = createShader(gl, gl.FRAGMENT_SHADER, fs)
@@ -27,38 +28,72 @@ class Program {
       throw new Error(gl.getProgramInfoLog(this.program))
     }
 
-    const numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES)
+    this.uniformMap = new Map()
+    const numUnis = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
+    for (let i = 0; i < numUnis; i++) {
+      const uniform = gl.getActiveUniform(this.program, i)
+      this.uniformMap.set(uniform, gl.getUniformLocation(this.program, uniform.name))
+    }
+
     this.attributeMap = new Map()
+    const numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES)
     for (let i = 0; i < numAttribs; i++) {
       const attribute = gl.getActiveAttrib(this.program, i)
-      const loc = gl.getAttribLocation(this.program, attribute)
-      this.attributeMap.set(attribute, loc)
+      this.attributeMap.set(attribute, gl.getAttribLocation(this.program, attribute.name))
     }
   }
 
   use() {
     this.renderer.gl.useProgram(this.program)
+
+    this.uniformMap.forEach((loc, { name, type }) => {
+      const value = this.uniforms[name]
+
+      if (!value) throw new Error(`${name} is not provided`)
+
+      switch (type) {
+        case 5126:
+            return value.length ? gl.uniform1fv(loc, value) : gl.uniform1f(loc, value); // FLOAT
+        case 35664:
+            return gl.uniform2fv(loc, value); // FLOAT_VEC2
+        case 35665:
+            return gl.uniform3fv(loc, value); // FLOAT_VEC3
+        case 35666:
+            return gl.uniform4fv(loc, value); // FLOAT_VEC4
+        case 35670: // BOOL
+        case 5124: // INT
+        case 35678: // SAMPLER_2D
+        case 35680:
+            return value.length ? gl.uniform1iv(loc, value) : gl.uniform1i(loc, value); // SAMPLER_CUBE
+        case 35671: // BOOL_VEC2
+        case 35667:
+            return gl.uniform2iv(loc, value); // INT_VEC2
+        case 35672: // BOOL_VEC3
+        case 35668:
+            return gl.uniform3iv(loc, value); // INT_VEC3
+        case 35673: // BOOL_VEC4
+        case 35669:
+            return gl.uniform4iv(loc, value); // INT_VEC4
+        case 35674:
+            return gl.uniformMatrix2fv(loc, false, value); // FLOAT_MAT2
+        case 35675:
+            return gl.uniformMatrix3fv(loc, false, value); // FLOAT_MAT3
+        case 35676:
+            return gl.uniformMatrix4fv(loc, false, value); // FLOAT_MAT4
+      }
+    })
   }
 }
 
 class Geometry {
-  constructor() {}
-}
-
-class PlaneGeometry extends Geometry {
-  constructor() {
-    super()
+  constructor(attributes) {
     this.drawRange = { start: 0, count: 0 }
-    this.attributes = createPlane()
-
+    this.attributes = attributes
     Object.keys(this.attributes).forEach((k) => {
       const item = this.attributes[k]
-      item.count = item.count || (item.stride ? item.data.byteLength / item.stride : item.data.length / item.size)
-      item.buffer = gl.createBuffer()
-      gl.bindBuffer(item.target, item.buffer)
-      gl.bufferData(item.target, item.data, gl.STATIC_DRAW)
+      item.count = item.count || (item.stride ? item.data.byteLength / item.stride : item.value.length / item.size)
 
-      if (key === 'index') {
+      if (k === 'index') {
         this.drawRange.count = item.count
       } else if (!this.attributes.index) {
         this.drawRange.count = Math.max(this.drawRange.count, item.count)
@@ -66,38 +101,103 @@ class PlaneGeometry extends Geometry {
     })
   }
 
-  draw(renderer, program) {
+  draw(renderer, program, mode = 0x0004) {
     const gl = renderer.gl
+
+    const index = this.attributes.index
+    if (index) {
+      if (index.buffer) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index.buffer)
+      } else {
+        index.buffer = gl.createBuffer()
+        gl.bindBuffer(index.target, index.buffer)
+        gl.bufferData(index.target, index.value, gl.STATIC_DRAW)
+      }
+    }
 
     program.attributeMap.forEach((loc, { name }) => {
       const item = this.attributes[name]
       if (!item) throw new Error(`Cannot found attribute ${name} in geometry`)
 
+      if (!item.buffer) {
+        item.buffer = gl.createBuffer()
+        gl.bindBuffer(item.target, item.buffer)
+        gl.bufferData(item.target, item.value, gl.STATIC_DRAW)
+      }
+
       gl.bindBuffer(item.target, item.buffer)
-      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0)
+      gl.vertexAttribPointer(loc, item.size, item.type, item.normalized, item.stride, item.offset)
       gl.enableVertexAttribArray(loc)
     })
 
-    if (this.attributes.index) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.attributes.index.buffer)
-    }
-
-    if (this.attributes.index) {
-      gl.drawElements()
+    if (index) {
+      gl.drawElements(mode, this.drawRange.count, index.type, this.drawRange.start)
     } else {
-      gl.drawArrays()
+      gl.drawArrays(mode, this.drawRange.start, this.drawRange.count)
     }
   }
 }
 
-class Mesh {
+class PlaneGeometry extends Geometry {
+  constructor() {
+    super(createPlane())
+  }
+}
+
+class Node {
+  constructor() {
+    this._parent = null
+    this.children = []
+
+    this.position = new Vec3()
+    this.rotation = new Vec3()
+    this.scale = new Vec3(1)
+    this.up = new Vec3(0, 1, 0)
+
+    this.worldMatrix = new Mat4()
+  }
+
+  set parent(node) {
+    if (!node || this.parent === node) return
+    if (this.parent) {
+      this.parent.removeChild(this)
+    }
+    node.add(this)
+    this.parent = node
+  }
+
+  get parent() {
+    return this._parent
+  }
+
+  add(child) {
+    if (this.children.find(c => c === child)) return
+    child.parent = this
+    this.children.push(child)
+  }
+
+  remove(child) {
+    this.children = this.children.filter(c => c !== child)
+    child.parent = null
+  }
+}
+
+class Scene extends Node {}
+
+class Camera extends Node {
+
+}
+
+class Mesh extends Node {
   constructor(geometry, program) {
+    super()
     this.geometry = geometry
     this.program = program
   }
 
-  draw() {
-    
+  draw(renderer) {
+    this.program.use()
+    this.geometry.draw(renderer, this.program)
   }
 }
 
@@ -122,7 +222,7 @@ function createPlane(width = 1, height = 1, widthSegments = 1, heightSegments = 
   const uv = new Float32Array(numPoints * 2)
   const index = []
 
-  let x, y, num
+  let x, y, num = 0
   for (let i = 0; i < maxHS; i++) {
     y = i * segHeight - halfHeight
     for (let j = 0; j < maxWS; j++, num++) {
@@ -168,17 +268,17 @@ function createGeometryResult(
 ) {
   const res = Object.create(null)
 
-  if (position) res.position = { size: positionSize, data: position, target: 0x8892 }
-  if (normal) res.normal = { size: normalSize, data: normal, target: 0x8892 }
-  if (uv) res.uv = { size: uvSize, data: uv, target: 0x8892 }
-  if (index) res.index = { size: 1, data: index, target: 0x8893 }
+  if (position) res.position = { size: positionSize, value: position, target: 0x8892 }
+  if (normal) res.normal = { size: normalSize, value: normal, target: 0x8892 }
+  if (uv) res.uv = { size: uvSize, value: uv, target: 0x8892 }
+  if (index) res.index = { size: 1, value: index, target: 0x8893 }
 
   Object.values(res).forEach(v => {
     v.stride = v.offset = 0
     v.normalized = false
-    v.type = v.data.constructor === Float32Array
+    v.type = v.value.constructor === Float32Array
               ? 0x1406
-              : v.data.constructor === Uint16Array
+              : v.value.constructor === Uint16Array
               ? 0x1403
               : 0x1405
   })
@@ -188,7 +288,7 @@ function createGeometryResult(
 
 function createGl(width = 500, height = 500) {
   const canvas = document.createElement('canvas')
-  const gl = canvas.getContext('gl')
+  const gl = canvas.getContext('webgl')
   const dpr = window.devicePixelRatio || 1
 
   canvas.style.width = `${width}px`
