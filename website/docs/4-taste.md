@@ -119,9 +119,9 @@ gl.drawArrays( // 从数组中绘制图元
 每次都创建 canvas，获取 WebGL 上下文非常麻烦，这里就创建一个 `createGl` 方法，以后都直接用该方法获取 WebGL 上下文。 
 
 ```js
-export function createGl(width = 500, height = 500) {
+function createGl(width = 500, height = 500) {
   const canvas = document.createElement('canvas')
-  const gl = canvas.getContext('gl')
+  const gl = canvas.getContext('webgl')
   const dpr = window.devicePixelRatio || 1
 
   canvas.style.width = `${width}px`
