@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earth</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <script>
+    function createGl(width = 500, height = 500) {
+  const canvas = document.createElement('canvas')
+  const gl = canvas.getContext('webgl')
+  const dpr = window.devicePixelRatio || 1
+
+  canvas.style.width = `${width}px`
+  canvas.style.height = `${height}px`
+  canvas.width = dpr * width
+  canvas.height = dpr * height
+  gl.viewport(0, 0, canvas.width, canvas.height)
+
+  document.body.append(canvas)
+  return gl
+}
+
+function fromYRotation(rad) {
+  const s = Math.sin(rad)
+  const c = Math.cos(rad)
+  return [
+    c, 0, -s, 0,
+    0, 1, 0, 0,
+    s, 0, c, 0,
+    0, 0, 0, 1
+  ]
+}
+
+function fromXRotation(rad) {
+  const s = Math.sin(rad)
+  const c = Math.cos(rad)
+  return [
+    1, 0, 0, 0,
+    0, c, s, 0,
+    0, -s, c, 0,
+    0, 0, 0, 1
+  ]
+}
+
+const gl = createGl()
+
+const program = createProgramFromSource(gl, `
+attribute vec4 aPos;
+attribute vec4 aColor;
+uniform mat4 uMat;
+varying vec4 vColor;
+
+void main() {
+  gl_Position = uMat * aPos;
+  vColor = aColor;
+}
+`, `
+precision mediump float;
+varying vec4 vColor;
+
+void main() {
+  gl_FragColor = vColor;
+}
+`)
+
+const points = new Float32Array([
+  -0.5,0.5,-0.5, 0.5,0.5,-0.5, 0.5,-0.5,-0.5, -0.5,-0.5,-0.5,
+  0.5,0.5,0.5, -0.5,0.5,0.5, -0.5,-0.5,0.5, 0.5,-0.5,0.5
+  // 立方体的 8 个顶点
+])
+const colors = new Float32Array([
+  1,0,0, 0,1,0, 0,0,1, 1,0,1,
+  0,0,0, 0,0,0, 0,0,0, 0,0,0
+  // 每个顶点的颜色
+])
+const indices = new Uint8Array([ // 面的索引，值是 points 的下标
+  0, 1, 2, 0, 2, 3, // 前
+  1, 4, 2, 4, 7, 2, // 右
+  4, 5, 6, 4, 6, 7, // 后
+  5, 3, 6, 5, 0, 3, // 左
+  0, 5, 4, 0, 4, 1, // 上
+  7, 6, 3, 7, 3, 2  // 下
+])
+
+const [posLoc, posBuffer] = createAttrBuffer(gl, program, 'aPos', points)
+const [colorLoc, colorBuffer] = createAttrBuffer(gl, program, 'aColor', colors)
+const indexBuffer = gl.createBuffer()
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer)
+gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0)
+gl.enableVertexAttribArray(posLoc)
+
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0)
+gl.enableVertexAttribArray(colorLoc)
+
+const matLoc = gl.getUniformLocation(program, 'uMat')
+
+gl.enable(gl.DEPTH_TEST)
+gl.clearColor(0, 1, 1, 1)
+
+let r = 0
+function draw() {
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+  gl.uniformMatrix4fv(matLoc, false, multiply(fromXRotation(r), fromYRotation(r)))
+  gl.drawElements(gl.TRIANGLES,indices.length,gl.UNSIGNED_BYTE,0)
+  r += 0.01
+  requestAnimationFrame(draw)
+}
+draw()
+
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type)
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  return shader;
+}
+
+function createProgramFromSource(gl, vertex, fragment) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER,vertex)
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragment)
+  const program = gl.createProgram()
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+  gl.linkProgram(program)
+  gl.useProgram(program)
+  return program
+}
+
+function createAttrBuffer(gl, program, attr, data) {
+  const location = gl.getAttribLocation(program, attr)
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+  return [location, buffer]
+}
+
+function multiply(a, b, out = []) {
+  let a00 = a[0],
+    a01 = a[1],
+    a02 = a[2],
+    a03 = a[3];
+  let a10 = a[4],
+    a11 = a[5],
+    a12 = a[6],
+    a13 = a[7];
+  let a20 = a[8],
+    a21 = a[9],
+    a22 = a[10],
+    a23 = a[11];
+  let a30 = a[12],
+    a31 = a[13],
+    a32 = a[14],
+    a33 = a[15];
+
+  // Cache only the current line of the second matrix
+  let b0 = b[0],
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3];
+  out[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[4];
+  b1 = b[5];
+  b2 = b[6];
+  b3 = b[7];
+  out[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[8];
+  b1 = b[9];
+  b2 = b[10];
+  b3 = b[11];
+  out[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+
+  b0 = b[12];
+  b1 = b[13];
+  b2 = b[14];
+  b3 = b[15];
+  out[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+  out[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
+  out[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32;
+  out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
+  return out;
+}
+  </script>
+</body>
+</html>

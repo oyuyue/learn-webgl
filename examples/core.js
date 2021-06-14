@@ -44,7 +44,8 @@ class Program {
   }
 
   use() {
-    this.renderer.gl.useProgram(this.program)
+    const gl = this.renderer.gl
+    gl.useProgram(this.program)
 
     this.uniformMap.forEach((loc, { name, type }) => {
       const value = this.uniforms[name]
@@ -144,6 +145,12 @@ class PlaneGeometry extends Geometry {
   }
 }
 
+class BoxGeometry extends Geometry {
+  constructor() {
+    super(createBox())
+  }
+}
+
 class Node {
   constructor() {
     this._parent = null
@@ -159,12 +166,12 @@ class Node {
   }
 
   set parent(node) {
-    if (!node || this.parent === node) return
-    if (this.parent) {
-      this.parent.removeChild(this)
+    if (!node || this._parent === node) return
+    if (this._parent) {
+      this._parent.removeChild(this)
     }
     node.add(this)
-    this.parent = node
+    this._parent = node
   }
 
   get parent() {
@@ -173,13 +180,13 @@ class Node {
 
   add(child) {
     if (this.children.find(c => c === child)) return
-    child.parent = this
+    child._parent = this
     this.children.push(child)
   }
 
   remove(child) {
     this.children = this.children.filter(c => c !== child)
-    child.parent = null
+    child._parent = null
   }
 }
 
@@ -198,14 +205,33 @@ class Mesh extends Node {
 
   draw(renderer) {
     this.program.use()
-    this.geometry.draw(renderer, this.program)
+    this.geometry.draw(renderer, this.program, renderer.gl.LINE_LOOP)
   }
 }
 
 
 
 
-
+function createBox() {
+  return createGeometryResult(
+    new Float32Array([-0.5,0.5,-0.5, 0.5,0.5,-0.5, 0.5,-0.5,-0.5, -0.5,-0.5,-0.5,
+      0.5,0.5,0.5, -0.5,0.5,0.5, -0.5,-0.5,0.5, 0.5,-0.5,0.5]),
+      new Uint16Array([ // 面的索引，值是 points 的下标
+        0, 1, 2, 0, 2, 3, // 前
+        1, 4, 2, 4, 7, 2, // 右
+        4, 5, 6, 4, 6, 7, // 后
+        5, 3, 6, 5, 0, 3, // 左
+        0, 5, 4, 0, 4, 1, // 上
+        7, 6, 3, 7, 3, 2  // 下
+      ]),
+      null,
+      new Float32Array([
+        1,0,0, 0,1,0, 0,0,1, 1,0,1,
+        0,0,0, 0,0,0, 0,0,0, 0,0,0
+        // 每个顶点的颜色
+      ])
+  )
+}
 
 function createPlane(width = 1, height = 1, widthSegments = 1, heightSegments = 1) {
   widthSegments = Math.floor(widthSegments)

@@ -1,8 +1,19 @@
 class Mat4 {
+
   constructor() {
     this.value = []
   }
 
+  static fromYRotation(rad) {
+    const s = Math.sin(rad)
+    const c = Math.cos(rad)
+    return [
+      c, 0, -s, 0,
+      0, 1, 0, 0,
+      s, 0, c, 0,
+      0, 0, 0, 1
+    ]
+  }
   
 }
 
@@ -35,5 +46,3 @@ class Vec3 {
     this.value[2] = v
   }
 }
-
-

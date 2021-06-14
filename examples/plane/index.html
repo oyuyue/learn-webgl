@@ -12,29 +12,43 @@
   <script src="../math.js"></script>
   <script>
     const renderer = new Renderer()
-    const plane = new PlaneGeometry()
+    const geometry = new BoxGeometry()
     const program = new Program(renderer, {
       vs: `
         attribute vec4 position;
+        attribute vec2 uv;
+        varying vec2 color;
+        uniform mat4 world;
 
         void main() {
-          gl_Position = position;
+          color = uv;
+          gl_Position = world * position;
         }
       `,
       fs: `
         precision highp float;
+        varying vec2 color;
 
         void main() {
-          gl_FragColor = vec4(0, 1, 1, 1);
+          gl_FragColor = vec4(color, 1, 1);
         }
       `
     })
 
-    const mesh = new Mesh(plane, program)
+    const mesh = new Mesh(geometry, program)
     const scene = new Scene()
     scene.add(mesh)
 
-    renderer.render(scene)
+    let r = 1
+
+    function draw() {
+      program.uniforms.world = Mat4.fromYRotation(r)
+      renderer.render(scene)
+      r += 0.01
+      requestAnimationFrame(draw)
+    }
+    draw()
+
   </script>
 </body>
 </html>
