@@ -204,7 +204,7 @@ gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0)
 gl.enableVertexAttribArray(colorLoc)
 
 gl.enable(gl.DEPTH_TEST)
-gl.clearColor(0, 1, 1, 1)
+gl.clearColor(0, 0, 0, 0)
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 gl.drawElements(
@@ -256,7 +256,7 @@ function createAttrBuffer(gl, program, attr, data) {
 `varying` 有点特殊，它用于从顶点着色器向片元着色器传送数据。上面例子中我们将 `aColor` 赋值给 `vColor`，然后在片元着色器中就可以使用 `vColor` 了。
 叫 `varying` 也是有原因的，我们可以先来看看上面代码最终渲染成什么样子。
 
-![image](https://user-images.githubusercontent.com/25923128/121116065-8cc73c80-c848-11eb-9baf-c3ec87765ca1.png)
+![image](https://user-images.githubusercontent.com/25923128/121994270-8ea87700-cdd7-11eb-922d-6c2c7e41f837.png)
 
 顶点着色器是逐顶点的，片段着色器是逐像素的，显然像素会比顶点多。`varying` 变量从顶点着色器向片元着色器传递时会被 OpenGL 插值，也就是我们定义了三角形 3 个顶点的颜色，三角形内部的像素都是根据这 3 个顶点颜色插值出来的。比如一个线段一个端点是红色，另一个是绿色，那么这个线段中间就是 50% 的红色和 50% 的绿色。
 

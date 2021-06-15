@@ -13,24 +13,40 @@
   <script>
     const renderer = new Renderer()
     const geometry = new BoxGeometry()
+
+    let colors = []
+    let size = geometry.attributes.position.value.length / 18
+    pushColor(1, 0, 0)
+    pushColor(0, 1, 0)
+    pushColor(0, 0, 1)
+    pushColor(1, 1, 0)
+    pushColor(0, 1, 1)
+    pushColor(1, 0, 1)
+    function pushColor(r, g, b) {
+      for (let i = 0; i < size; i++) {
+        colors.push(r, g, b)
+      }
+    }
+    geometry.setAttribute('color', { value: new Float32Array(colors) })
+
     const program = new Program(renderer, {
       vs: `
         attribute vec4 position;
-        attribute vec2 uv;
-        varying vec2 color;
+        attribute vec3 color;
         uniform mat4 world;
+        varying vec3 vColor;
 
         void main() {
-          color = uv;
+          vColor = color;
           gl_Position = world * position;
         }
       `,
       fs: `
         precision highp float;
-        varying vec2 color;
+        varying vec3 vColor;
 
         void main() {
-          gl_FragColor = vec4(color, 1, 1);
+          gl_FragColor = vec4(vColor, 1);
         }
       `
     })
@@ -42,7 +58,7 @@
     let r = 1
 
     function draw() {
-      program.uniforms.world = Mat4.fromYRotation(r)
+      program.uniforms.world = Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))
       renderer.render(scene)
       r += 0.01
       requestAnimationFrame(draw)
