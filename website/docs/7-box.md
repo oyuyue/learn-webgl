@@ -239,6 +239,8 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
 
 我们可以指定盒子的宽度、高度和深度，并且还可以设置每个面的有几行和几列。它会返回一个对象里面包含顶点位置和索引。
 
+上面代码有点复杂，需要花点时间消化一下，基本思路是分别构建盒子的 6 个面。比如在构建正面时，我们将面移动到坐标轴的正中间并反转 Y 轴，这样我们就可以从左上角第一个点作为起点。
+
 ```js
 const box = createBox()
 let colors = []
