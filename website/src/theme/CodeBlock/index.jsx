@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import CodeBlock from '@theme-init/CodeBlock';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const template = `
 <!DOCTYPE html>
@@ -15,10 +16,13 @@ const template = `
 
 const Preview = ({ children }) => {
   const iframe = useRef()
+  const { siteConfig: { baseUrl } } = useDocusaurusContext()
+
   useEffect(() => {
+    const prefix = location.origin + baseUrl
     const blob = new Blob([template.replace('#{body}', `
-      <script src="${location.origin}/learn-webgl/examples/core.js"></script>
-      <script src="${location.origin}/learn-webgl/examples/math.js"></script>
+      <script src="${prefix}examples/core.js"></script>
+      <script src="${prefix}examples/math.js"></script>
       <script>window.onload=function(){${children}}</script>
     `)], {type: 'text/html'})
     const blobUrl = URL.createObjectURL(blob)

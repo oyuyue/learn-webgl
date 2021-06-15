@@ -2,6 +2,7 @@ class Renderer {
   constructor() {
     this.gl = createGl()
     this.gl.enable(this.gl.DEPTH_TEST)
+    this.gl.enable(this.gl.CULL_FACE)
   }
 
   render(scene) {

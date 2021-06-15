@@ -1,4 +1,4 @@
-# 盒子
+# 盒子 / 面剔除
 
 上篇文章我们学到了如何变换物体，现在我们可以让[着色器](/5-shader.md)中的立方体动起来了。
 
@@ -241,10 +241,12 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
 
 上面代码有点复杂，需要花点时间消化一下，基本思路是分别构建盒子的 6 个面。比如在构建正面时，我们将面移动到坐标轴的正中间并反转 Y 轴，这样我们就可以从左上角第一个点作为起点。
 
+现在我们需要指定每个面的颜色。
+
 ```js
 const box = createBox()
 let colors = []
-let size = box.position.length / 18
+let size = box.position.length / 6 / 3
 pushColor(1, 0, 0)
 pushColor(0, 1, 0)
 pushColor(0, 0, 1)
@@ -277,6 +279,112 @@ function pushColor(r, g, b) {
   }
 }
 geometry.setAttribute('color', { value: new Float32Array(colors) })
+
+const program = new Program(renderer, {
+  vs: `
+    attribute vec4 position;
+    attribute vec3 color;
+    uniform mat4 world;
+    varying vec3 vColor;
+
+    void main() {
+      vColor = color;
+      gl_Position = world * position;
+    }
+  `,
+  fs: `
+    precision highp float;
+    varying vec3 vColor;
+
+    void main() {
+      gl_FragColor = vec4(vColor, 1);
+    }
+  `
+})
+
+const mesh = new Mesh(geometry, program)
+const scene = new Scene()
+scene.add(mesh)
+
+let r = 1
+function draw() {
+  program.uniforms.world = Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))
+  renderer.render(scene)
+  r += 0.01
+  requestAnimationFrame(draw)
+}
+draw()
+```
+
+## 面剔除
+
+上面渲染的立方体，我们一次并不能看见它的所有的面，只能看见 3 个面，但是我们却渲染了所有的面。
+
+为了节省性能，我们可以只渲染用户能看到的面，看不到的面就不渲染了。为了做到这一点我们可以只渲染正面面向用户的面，而丢弃面向用户的面是背面的面。当然 OpenGL 提供了面剔除这个功能，OpenGL 能够检查所有面向观察者的面，并渲染它们，而丢弃那些背向的面。
+
+我们需要让 OpenGL 能够区分哪个面是正面，哪个面是背面。我们已经知道那些复杂模型都是由一个个三角形组成，我们要区分面的正面和背面，也就是区分这一个个三角形的正面和背面。
+
+我们可以通过三角形各个顶点的顺序来搞告诉 OpenGL 哪个是正向三角形哪个是背向三角形。
+
+![image](https://user-images.githubusercontent.com/25923128/122080604-f8a13a80-ce30-11eb-89ec-1a71171b852a.png)
+
+有两种方式描述三角形三个顶点的顺序，分别是顺时针和逆时针。默认情况 OpenGL 将逆时针顺序的三角形处理为正向三角形。我们同样可以伸出右手握拳，然后伸出大拇指，和[坐标系](/2-coordinate.md)中一样，手指的弯曲和三角形的顶点的顺序一样，如果大拇指指向你说明这个面是正面会被渲染，否则是背面会被剔除。
+
+[![image](https://user-images.githubusercontent.com/25923128/122086365-3785bf00-ce36-11eb-8594-739ecbdace5f.png)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/04%20Face%20culling/)
+
+默认情况面剔除是关闭的，我们需要启用它。
+
+```js
+gl.enable(gl.CULL_FACE)
+```
+
+我们还可以指定剔除哪个面，默认是 `gl.BACK`。
+
+```js
+gl.cullFace(gl.FRONT)
+gl.cullFace(gl.BACK)
+gl.cullFace(gl.FRONT_AND_BACK)
+```
+
+我们还能指定什么顺序表示的是正面，默认是 `gl.CCW` 表示逆时针。
+
+```js
+gl.frontFace(gl.CW)
+gl.frontFace(gl.CCW)
+```
+
+现在我们回过头，再来看上面的 `createBox` 函数，在 `buildPlane` 中第一个循环计算出了面的顶点位置，第二个循环中计算了面的索引，我们求出了每个小格子的 4 个顶点，分别是 `a`，`b`，`c` 和 `d`，如下图所示。
+
+![image](https://user-images.githubusercontent.com/25923128/122088782-ac59f880-ce38-11eb-846e-53817f224358.png)
+
+然后是 `index.push(a, b, c, a, c, d)`，需要注意这个顺序非常重要，因为逆时针为正面，`a`、`b` 和 `c` 构造了一个逆时针顺序的三角形，`a`、`c` 和 `d` 构成了另一个逆时针三角形，两个三角形组成了一个正方形。
+
+如果我们将 `index.push(a, b, c, a, c, d)` 变成 `index.push(a, b, c, a, d, c)` 将第二个三角形变成顺时针，那么渲染的立方体，将会是下面这样。
+
+```js run hide
+const renderer = new Renderer()
+const geometry = new BoxGeometry()
+
+let colors = []
+let size = geometry.attributes.position.value.length / 18
+pushColor(1, 0, 0)
+pushColor(0, 1, 0)
+pushColor(0, 0, 1)
+pushColor(1, 1, 0)
+pushColor(0, 1, 1)
+pushColor(1, 0, 1)
+function pushColor(r, g, b) {
+  for (let i = 0; i < size; i++) {
+    colors.push(r, g, b)
+  }
+}
+geometry.setAttribute('color', { value: new Float32Array(colors) })
+
+for (let i = 0, ai = geometry.attributes.index.value, l = ai.length; i < l; i += 6) {
+  const tmp = ai[i + 5]
+  ai[i + 5] =ai[i + 4]
+  ai[i + 4] = tmp
+}
 
 const program = new Program(renderer, {
   vs: `
