@@ -1,11 +1,14 @@
 class Renderer {
   constructor() {
     this.gl = createGl()
+    this.gl.enable(this.gl.DEPTH_TEST)
   }
 
   render(scene) {
-    this.gl.clearColor(1, 1, 1, 1)
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT)
+    const gl = this.gl
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
     scene.children.forEach(mesh => {
       mesh.draw(this)
     })
@@ -89,17 +92,26 @@ class Program {
 class Geometry {
   constructor(attributes) {
     this.drawRange = { start: 0, count: 0 }
-    this.attributes = attributes
-    Object.keys(this.attributes).forEach((k) => {
-      const item = this.attributes[k]
-      item.count = item.count || (item.stride ? item.data.byteLength / item.stride : item.value.length / item.size)
+    this.attributes = Object.create(null)
 
-      if (k === 'index') {
-        this.drawRange.count = item.count
-      } else if (!this.attributes.index) {
-        this.drawRange.count = Math.max(this.drawRange.count, item.count)
-      }
-    })
+    Object.keys(attributes).forEach((k) => this.setAttribute(k, attributes[k]))
+  }
+
+  setAttribute(name, attribute) {
+    attribute.size = attribute.size || 3
+    attribute.target = attribute.target || 0x8892
+    attribute.stride = attribute.stride || 0
+    attribute.offset = attribute.offset || 0
+    attribute.normalized = attribute.normalized || false
+    attribute.type = attribute.type || attribute.value.constructor === Float32Array ? 0x1406 : attribute.value.constructor === Uint16Array ? 0x1403 : 0x1405
+    attribute.count = attribute.count || (attribute.stride ? attribute.value.byteLength / attribute.stride : attribute.value.length / attribute.size)
+    this.attributes[name] = attribute
+
+    if (name === 'index') {
+      this.drawRange.count = attribute.count
+    } else if (!this.attributes.index) {
+      this.drawRange.count = Math.max(this.drawRange.count, attribute.count)
+    }
   }
 
   draw(renderer, program, mode = 0x0004) {
@@ -147,7 +159,7 @@ class PlaneGeometry extends Geometry {
 
 class BoxGeometry extends Geometry {
   constructor() {
-    super(createBox())
+    super(createBox(1, 1, 1, 1, 1, 1))
   }
 }
 
@@ -205,32 +217,8 @@ class Mesh extends Node {
 
   draw(renderer) {
     this.program.use()
-    this.geometry.draw(renderer, this.program, renderer.gl.LINE_LOOP)
+    this.geometry.draw(renderer, this.program, renderer.gl.TRIANGLES)
   }
-}
-
-
-
-
-function createBox() {
-  return createGeometryResult(
-    new Float32Array([-0.5,0.5,-0.5, 0.5,0.5,-0.5, 0.5,-0.5,-0.5, -0.5,-0.5,-0.5,
-      0.5,0.5,0.5, -0.5,0.5,0.5, -0.5,-0.5,0.5, 0.5,-0.5,0.5]),
-      new Uint16Array([ // 面的索引，值是 points 的下标
-        0, 1, 2, 0, 2, 3, // 前
-        1, 4, 2, 4, 7, 2, // 右
-        4, 5, 6, 4, 6, 7, // 后
-        5, 3, 6, 5, 0, 3, // 左
-        0, 5, 4, 0, 4, 1, // 上
-        7, 6, 3, 7, 3, 2  // 下
-      ]),
-      null,
-      new Float32Array([
-        1,0,0, 0,1,0, 0,0,1, 1,0,1,
-        0,0,0, 0,0,0, 0,0,0, 0,0,0
-        // 每个顶点的颜色
-      ])
-  )
 }
 
 function createPlane(width = 1, height = 1, widthSegments = 1, heightSegments = 1) {
@@ -284,6 +272,63 @@ function createPlane(width = 1, height = 1, widthSegments = 1, heightSegments = 
   )
 }
 
+function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1, depthSeg = 1) {
+  const segWidth = width / widthSeg
+  const segHeight = height / heightSeg
+  const segDepth = height / depthSeg
+  const halfWidth = width / 2
+  const halfHeight = height / 2
+  const halfDepth = depth / 2
+
+  const position = []
+  const index = []
+
+  let numVertex = 0
+  buildPlane(widthSeg, heightSeg, segWidth, segHeight, halfWidth, halfHeight, halfDepth, 1, -1, 0, 1, 2)
+  buildPlane(widthSeg, heightSeg, segWidth, segHeight, halfWidth, halfHeight, -halfDepth, -1, -1, 0, 1, 2)
+
+  buildPlane(depthSeg, heightSeg, segDepth, segHeight, halfDepth, halfHeight, -halfWidth, 1, -1, 2, 1, 0)
+  buildPlane(depthSeg, heightSeg, segDepth, segHeight, halfDepth, halfHeight, halfWidth, -1, -1, 2, 1, 0)
+
+  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, -halfHeight, 1, -1, 0, 2, 1)
+  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, halfHeight, -1, -1, 0, 2, 1)
+
+  function buildPlane(uSeg, vSeg, uLen, vLen, halfU, halfV, depth, uDir, vDir, ix, iy, iz) {
+    const maxU = uSeg + 1
+    const maxV = vSeg + 1
+
+    let x, y, pos = []
+    for (let i = 0; i < maxV; i++) {
+      y = i * vLen - halfV
+      for (let j = 0; j < maxU; j++) {
+        x = j * uLen - halfU
+        pos[ix] = x * uDir
+        pos[iy] = y * vDir
+        pos[iz] = depth
+        position.push(...pos)
+      }
+    }
+
+    let a, b, c, d
+    for (let i = 0; i < vSeg; i++) {
+      for (let j = 0; j < uSeg; j++) {
+        a = numVertex + j + maxU * i
+        b = numVertex + j + maxV * (i + 1)
+        c = b + 1
+        d = a + 1
+        index.push(a, b, c, a, c, d)
+      }
+    }
+
+    numVertex += (maxU * maxV)
+  }
+
+  return createGeometryResult(
+    new Float32Array(position),
+    numVertex > 65536 ? new Uint32Array(index) : new Uint16Array(index),
+  )
+}
+
 function createGeometryResult(
   position,
   index,
@@ -300,20 +345,10 @@ function createGeometryResult(
   if (uv) res.uv = { size: uvSize, value: uv, target: 0x8892 }
   if (index) res.index = { size: 1, value: index, target: 0x8893 }
 
-  Object.values(res).forEach(v => {
-    v.stride = v.offset = 0
-    v.normalized = false
-    v.type = v.value.constructor === Float32Array
-              ? 0x1406
-              : v.value.constructor === Uint16Array
-              ? 0x1403
-              : 0x1405
-  })
-
   return res
 }
 
-function createGl(width = 500, height = 500) {
+function createGl(width = 350, height = 350) {
   const canvas = document.createElement('canvas')
   const gl = canvas.getContext('webgl')
   const dpr = window.devicePixelRatio || 1
