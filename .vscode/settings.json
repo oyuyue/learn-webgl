@@ -8,6 +8,7 @@
     "arccos",
     "compat",
     "highp",
+    "hypot",
     "lowp",
     "mediump",
     "opengl",
