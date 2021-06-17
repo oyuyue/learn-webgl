@@ -197,8 +197,8 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
   buildPlane(depthSeg, heightSeg, segDepth, segHeight, halfDepth, halfHeight, halfWidth, -1, -1, 2, 1, 0)
 
   // top, bottom
+  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, halfHeight, 1, 1, 0, 2, 1)
   buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, -halfHeight, 1, -1, 0, 2, 1)
-  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, halfHeight, -1, -1, 0, 2, 1)
 
   function buildPlane(uSeg, vSeg, uLen, vLen, halfU, halfV, depth, uDir, vDir, ix, iy, iz) {
     const maxU = uSeg + 1
@@ -239,7 +239,7 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
 
 我们可以指定盒子的宽度、高度和深度，并且还可以设置每个面的有几行和几列。它会返回一个对象里面包含顶点位置和索引。
 
-上面代码有点复杂，需要花点时间消化一下，基本思路是分别构建盒子的 6 个面。比如在构建正面时，我们将面移动到坐标轴的正中间并反转 Y 轴，这样我们就可以从左上角第一个点作为起点。
+上面代码有点复杂，需要花点时间消化一下，基本思路是分别构建盒子的 6 个面。比如在构建正面时，我们将面移动到坐标轴的正中间并反转 Y 轴，这样我们就可以从左上角第一个点作为起点。需要注意的是我们上面采用的是[右手坐标系](/2-coordinate.md)，正面的 Z 正值，背面是负值。
 
 现在我们需要指定每个面的颜色。
 
@@ -266,7 +266,7 @@ const renderer = new Renderer()
 const geometry = new BoxGeometry()
 
 let colors = []
-let size = geometry.attributes.position.value.length / 18
+let size = geometry.attributes.position.value.length / 6 / 3
 pushColor(1, 0, 0)
 pushColor(0, 1, 0)
 pushColor(0, 0, 1)
@@ -299,14 +299,15 @@ const program = new Program(renderer, {
     void main() {
       gl_FragColor = vec4(vColor, 1);
     }
-  `
+  `,
+  cullFace: 0
 })
 
 const mesh = new Mesh(geometry, program)
 const scene = new Scene()
 scene.add(mesh)
 
-let r = 1
+let r = 0
 function draw() {
   program.uniforms.world = Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))
   renderer.render(scene)
@@ -315,6 +316,8 @@ function draw() {
 }
 draw()
 ```
+
+看上方的渲染结果，不知道有没有同学注意到我们将正面设置为红色，背面设置为绿色，但是渲染出来却是绿色的面在前。这是因为 `createBox` 中使用的是右手坐标系，这也是 OpenGL 传统坐标系，但是在[坐标系](/2-coordinate.md)中有强调，标准坐标系中实际上是左手坐标系，所以 Z 值小的在 Z 值大的前面。
 
 ## 面剔除
 
@@ -366,7 +369,7 @@ const renderer = new Renderer()
 const geometry = new BoxGeometry()
 
 let colors = []
-let size = geometry.attributes.position.value.length / 18
+let size = geometry.attributes.position.value.length / 6 / 3
 pushColor(1, 0, 0)
 pushColor(0, 1, 0)
 pushColor(0, 0, 1)
@@ -382,7 +385,7 @@ geometry.setAttribute('color', { value: new Float32Array(colors) })
 
 for (let i = 0, ai = geometry.attributes.index.value, l = ai.length; i < l; i += 6) {
   const tmp = ai[i + 5]
-  ai[i + 5] =ai[i + 4]
+  ai[i + 5] = ai[i + 4]
   ai[i + 4] = tmp
 }
 
@@ -412,7 +415,7 @@ const mesh = new Mesh(geometry, program)
 const scene = new Scene()
 scene.add(mesh)
 
-let r = 1
+let r = 0
 function draw() {
   program.uniforms.world = Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))
   renderer.render(scene)
