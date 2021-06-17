@@ -192,14 +192,14 @@ const indices = new Uint8Array([ // 面的索引，值是 points 的下标
 const [posLoc, posBuffer] = createAttrBuffer(gl, program, 'aPos', points)
 const [colorLoc, colorBuffer] = createAttrBuffer(gl, program, 'aColor', colors)
 const indexBuffer = gl.createBuffer()
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer) // 绑定 buffer 到 ELEMENT_ARRAY_BUFFER
 gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
 
-gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer)
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer) // 绑定 buffer 到 ARRAY_BUFFER
 gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0)
 gl.enableVertexAttribArray(posLoc)
 
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer) // 绑定 buffer 到 ARRAY_BUFFER
 gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0)
 gl.enableVertexAttribArray(colorLoc)
 
@@ -248,6 +248,14 @@ function createAttrBuffer(gl, program, attr, data) {
 上面代码中，我们没有使用 `drawArrays`，而是使用 `drawElements`。 它们的主要区别是 `drawArrays` 是根据 `ARRAY_BUFFER` 来渲染，`drawElements` 是根据 `ELEMENT_ARRAY_BUFFER` 来渲染（根据索引来渲染）。
 
 因为我们渲染的是三维物体，需要区分哪个顶点在前哪个顶点在后。上面代码中使用 `gl.enable(gl.DEPTH_TEST)` 启用了深度测试，并且使用 `gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)` 同时重置颜色缓存和深度缓存。深度缓存映射可以回顾[坐标系](/2-coordinate.md)。
+
+:::info
+
+上面代码调用了多次 `bindBuffer` 方法，可能有同学会觉得已经在 `createAttrBuffer` 中调用了一次后面就不用调用了吧。
+
+之前提到过 OpenGL 是一个的状态机，我们在操作 Buffer 之前，需要绑定对应的 Buffer，特别是在代码比较多的情况下，你可能不清楚当前绑定的是哪个 Buffer，直接对 Buffer 进行操作，可能操作到了其他 Buffer。所以在操作 Buffer 之前进行绑定，可以减少 BUG。
+
+:::
 
 ### varying 存储限定字
 
