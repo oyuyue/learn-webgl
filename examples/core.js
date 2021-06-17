@@ -2,7 +2,6 @@ class Renderer {
   constructor() {
     this.gl = createGl()
     this.gl.enable(this.gl.DEPTH_TEST)
-    this.gl.enable(this.gl.CULL_FACE)
   }
 
   render(scene) {
@@ -17,10 +16,11 @@ class Renderer {
 }
 
 class Program {
-  constructor(renderer, { vs, fs, uniforms = {} } = {}) {
+  constructor(renderer, { vs, fs, uniforms = {}, cullFace = renderer.gl.BACK } = {}) {
     this.renderer = renderer
     const gl = renderer.gl
     this.uniforms = uniforms
+    this.cullFace = cullFace
 
     const v = createShader(gl, gl.VERTEX_SHADER, vs)
     const f = createShader(gl, gl.FRAGMENT_SHADER, fs)
@@ -50,6 +50,12 @@ class Program {
   use() {
     const gl = this.renderer.gl
     gl.useProgram(this.program)
+
+    if (this.cullFace) {
+      gl.enable(gl.CULL_FACE)
+    } else {
+      gl.disable(gl.CULL_FACE)
+    }
 
     this.uniformMap.forEach((loc, { name, type }) => {
       const value = this.uniforms[name]
@@ -206,7 +212,14 @@ class Node {
 class Scene extends Node {}
 
 class Camera extends Node {
+  constructor() {
+    super()
+    this.viewMatrix = Mat4.identity()
+  }
 
+  lookAt(target) {
+    Mat4.lookAt(this.position, target, this.up, this.viewMatrix)
+  }
 }
 
 class Mesh extends Node {
@@ -291,8 +304,8 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
   buildPlane(depthSeg, heightSeg, segDepth, segHeight, halfDepth, halfHeight, -halfWidth, 1, -1, 2, 1, 0)
   buildPlane(depthSeg, heightSeg, segDepth, segHeight, halfDepth, halfHeight, halfWidth, -1, -1, 2, 1, 0)
 
+  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, halfHeight, 1, 1, 0, 2, 1)
   buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, -halfHeight, 1, -1, 0, 2, 1)
-  buildPlane(widthSeg, depthSeg, segWidth, segDepth, halfWidth, halfDepth, halfHeight, -1, -1, 0, 2, 1)
 
   function buildPlane(uSeg, vSeg, uLen, vLen, halfU, halfV, depth, uDir, vDir, ix, iy, iz) {
     const maxU = uSeg + 1
