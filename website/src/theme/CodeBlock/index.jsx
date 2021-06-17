@@ -21,8 +21,8 @@ const Preview = ({ children }) => {
   useEffect(() => {
     const prefix = location.origin + baseUrl
     const blob = new Blob([template.replace('#{body}', `
-      <script src="${prefix}examples/core.js"></script>
       <script src="${prefix}examples/math.js"></script>
+      <script src="${prefix}examples/core.js"></script>
       <script>window.onload=function(){${children}}</script>
     `)], {type: 'text/html'})
     const blobUrl = URL.createObjectURL(blob)

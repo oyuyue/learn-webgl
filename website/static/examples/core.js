@@ -206,7 +206,14 @@ class Node {
 class Scene extends Node {}
 
 class Camera extends Node {
+  constructor() {
+    super()
+    this.viewMatrix = Mat4.identity()
+  }
 
+  lookAt(target) {
+    Mat4.lookAt(this.position, target, this.up, this.viewMatrix)
+  }
 }
 
 class Mesh extends Node {

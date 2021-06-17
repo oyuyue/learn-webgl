@@ -74,7 +74,7 @@ X = normalize(cross(up, Z))
 知道了 X 和 Z 轴，那么 Y 轴就可以直接用 Z 轴叉乘 X 轴来求得。
 
 ```js
-Y = normalize(cross(Z, X))
+Y = cross(Z, X)
 ```
 
 ![image](https://user-images.githubusercontent.com/25923128/122206321-d14f7980-ced3-11eb-96da-fec42df5015e.png)
@@ -139,7 +139,6 @@ viewMatrix = R * T
 
 ```js
 class Mat4 {
-
   static identity(out = []) {
     return Object.assign(out, [
       1, 0, 0, 0,
@@ -150,68 +149,47 @@ class Mat4 {
   }
 
   static lookAt(eye, target, up, out = []) {
-      let x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
       const eyeX = eye[0], eyeY = eye[1], eyeZ = eye[2];
       const upX = up[0], upY = up[1], upZ = up[2];
       const targetX = target[0], targetY = target[1], targetZ = target[2];
-
-      // 相机位置和相机目标在同一位置，返回单位矩阵
-      if (
-        Math.abs(eyeX - targetX) < 1e-6 &&
-        Math.abs(eyeY - targetY) < 1e-6 &&
-        Math.abs(eyeZ - targetZ) < 1e-6
-      ) {
-        return Mat4.identity(out);
-      }
+      let x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
 
       // 相机 Z 轴
       z0 = eyeX - targetX;
       z1 = eyeY - targetY;
       z2 = eyeZ - targetZ;
-
       // 归一化 Z 轴
-      len = 1 / Math.hypot(z0, z1, z2);
-      z0 *= len;
-      z1 *= len;
-      z2 *= len;
+      len = z0 * z0 + z1 * z1 + z2 * z2
+      if (len > 0) {
+        len = 1 / Math.sqrt(len)
+        z0 *= len;
+        z1 *= len;
+        z2 *= len;
+      } else {
+        // 相机和目标在同一位置
+        return Mat4.identity(out)
+      }
 
       // 叉积 up 和 Z 轴，求出 X 轴
       x0 = upY * z2 - upZ * z1;
       x1 = upZ * z0 - upX * z2;
       x2 = upX * z1 - upY * z0;
-
-      len = Math.hypot(x0, x1, x2);
-      if (!len) {
-        // up 和 Z 轴平行
-        x0 = 0;
-        x1 = 0;
-        x2 = 0;
-      } else {
-        // 归一化 X 轴
-        len = 1 / len;
+      // 归一化 X 轴
+      len = x0 * x0 + x1 * x1 + x2 * x2;
+      if (len > 0) {
+        len = 1 / Math.sqrt(len);
         x0 *= len;
         x1 *= len;
         x2 *= len;
+      } else {
+        // up 与 Z 平行
+        return Mat4.identity(out)
       }
 
       // Z 叉乘 X，求出 Y 轴
       y0 = z1 * x2 - z2 * x1;
       y1 = z2 * x0 - z0 * x2;
       y2 = z0 * x1 - z1 * x0;
-
-      len = Math.hypot(y0, y1, y2);
-      if (!len) {
-        // Z 轴和 X 轴平行
-        y0 = 0;
-        y1 = 0;
-        y2 = 0;
-      } else {
-        // 归一化 Y 轴
-        len = 1 / len;
-        y0 *= len;
-        y1 *= len;
-        y2 *= len;
-      }
 
       // OpenGL 中矩阵是列主序
       out[0] = x0;
@@ -233,7 +211,6 @@ class Mat4 {
 
       return out;
   }
-
 }
 ```
 
@@ -242,10 +219,24 @@ class Mat4 {
 有了 `lookAt` 工具方法，我们可以来完成一开始写的 `Camera` 类了。
 
 ```js
+class Vec3 extends Array {
+  constructor(x = 0, y = x, z = x) {
+    super(x, y, z)
+  }
+
+  get x() { return this[0] }
+  get y() { return this[1] }
+  get z() { return this[2] }
+
+  set x(v) { this[0] = v }
+  set y(v) { this[1] = v }
+  set z(v) { this[2] = v }
+}
+
 class Camera {
   constructor() {
-    this.position = [0, 0, 0]
-    this.up = [0, 1, 0]
+    this.position = new Vec3()
+    this.up = new Vec3(0, 1, 0)
     this.viewMatrix = Mat4.identity()
   }
 
@@ -254,3 +245,85 @@ class Camera {
   }
 }
 ```
+
+## 渲染立方体
+
+现在就用上面刚完成的 `Camera`，来渲染上篇文章中的立方体吧。我们将相机放在 `[0.5, 0.5, 0.5]` 的位置，让它看向 `[0, 0, 0]` 原点位置。上篇文章中我们封装了 `createBox` 工具方法，现在就可以直接用了，它默认会返回 `[-0.5, -0.5, -0.5]` 到 `[0.5, 0.5, 0.5]` 中心在坐标原点，长宽高都是 1 的立方体。
+
+```js {29-33} run
+const gl = createGl()
+
+const program = createProgramFromSource(gl, `
+attribute vec4 aPos;
+uniform mat4 uMat;
+
+void main() {
+  gl_Position = uMat * aPos;
+}
+`, `
+precision highp float;
+
+void main() {
+  gl_FragColor = vec4(gl_FragCoord.zzz, 1);
+}
+`)
+
+const box = createBox()
+// { index: { value: [], size: 1 }, position: { value: [], size: 3 } }
+
+const indexBuffer = gl.createBuffer()
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, box.index.value, gl.STATIC_DRAW)
+
+const [posLoc] = createAttrBuffer(gl, program, 'aPos', box.position.value)
+gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0)
+gl.enableVertexAttribArray(posLoc)
+
+const camera = new Camera()
+camera.position.x = camera.position.y = camera.position.z = 0.5
+camera.lookAt([0, 0, 0])
+const matLoc = gl.getUniformLocation(program, 'uMat')
+gl.uniformMatrix4fv(matLoc, false, camera.viewMatrix)
+
+gl.enable(gl.DEPTH_TEST)
+gl.enable(gl.CULL_FACE)
+gl.clearColor(0, 0, 0, 0)
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+gl.drawElements(gl.TRIANGLES, box.index.value.length, gl.UNSIGNED_SHORT, 0)
+
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type)
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  return shader;
+}
+
+function createProgramFromSource(gl, vertex, fragment) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER,vertex)
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragment)
+  const program = gl.createProgram()
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+  gl.linkProgram(program)
+  gl.useProgram(program)
+  return program
+}
+
+function createAttrBuffer(gl, program, attr, data) {
+  const location = gl.getAttribLocation(program, attr)
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+  return [location, buffer]
+}
+```
+
+:::info
+
+片段着色器中的 `gl_FragCoord` 后面再详细讲解，这里用到的 `z` 值是当前片段的深度，在之前[坐标系](/2-coordinate.md)深度缓存映射中有提到，它的值的范围是 0 到 1。
+
+:::
+
+我们可以看到立方体的几个角消失了，这是因为我们将相机位置设置到 `[0.5, 0.5, 0.5]`，那么立方体就要向反方向移动 `0.5`，我们在[坐标系](/2-coordinate.md)中有提到，OpenGL 的 X、Y 和 Z 轴范围是 `-1` 到 `1`，任何超出这个范围的部分就会被裁剪丢弃，我们让立方体反方向移动 `0.5` 刚好让立方体移动到坐标系的边缘，然后对立方体进行旋转，刚好就立方体的一部分超出了这个范围，导致这一部分被裁剪丢弃。
+
+如何解决这个问题呢？能不能扩展坐标系范围，让物体坐标可以超过 `-1` 和 `1`？这正是下篇文章要讲的内容！
