@@ -200,3 +200,19 @@ function createAttrBuffer(gl, program, attr, data) {
 
 我们可以将平截头体的远平面的宽高往下压，把平截头体压成和正交投影中的盒子形状，然后再做一次正交投影，这样就可以将平截头体变到 NDC 了。
 
+假设在平截头体中有一个点 `[Xe, Ye, Ze]`，我们要将 `Xe` 压缩成 `Xp`，`Ye` 压缩成 `Yp`。
+
+<img src="https://user-images.githubusercontent.com/25923128/122530059-adfe0900-d050-11eb-8f3a-184f4644e37a.png" width="500"></img>
+
+我们首先来压缩 X 轴，如上图，我们首先将它投影到近平面上，我们可以发现与原点的连线形成两个相似三角形，那么 `Xp` 就等于 `-n / Ze * Xe`。
+
+<img src="https://user-images.githubusercontent.com/25923128/122545855-e86fa200-d060-11eb-87bb-eff1ca78038e.png" width="500"></img>
+
+同样的 `Yp` 等于 `-n / Ze * Ye`。
+
+```js
+[
+  
+]
+```
+
