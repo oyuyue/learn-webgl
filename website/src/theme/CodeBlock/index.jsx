@@ -34,20 +34,21 @@ const Preview = ({ children }) => {
       let raf = () => {}
   
       iframe.current.onload = function() {
-        const originRequestAnimationFrame = iframe.current.contentWindow.requestAnimationFrame
+        const contentWindow = iframe.current.contentWindow
+        const originRequestAnimationFrame = contentWindow.requestAnimationFrame
         raf = (...args) => {
           if (!canRun) {
             lastArgs = args
             return
           }
-          return originRequestAnimationFrame.apply(iframe.current.contentWindow, args)
+          return originRequestAnimationFrame.apply(contentWindow, args)
         }
-        iframe.current.contentWindow.requestAnimationFrame = raf
+        contentWindow.requestAnimationFrame = raf
       }
   
       interObserver = new IntersectionObserver((entries) => {
         canRun = entries[0].isIntersecting
-        if (lastArgs && lastArgs.length && entries[0].isIntersecting) {
+        if (canRun && lastArgs && lastArgs.length) {
           raf(...lastArgs)
           lastArgs = null
         }
@@ -69,15 +70,9 @@ const Preview = ({ children }) => {
   return <iframe ref={iframe} style={{ border: 0, width: '100%', minWidth: 350, height: 350 }}/>
 }
 
-const withLiveEditor = (Component) => {
-  const WrappedComponent = ({ run, hide, ...rest }) => {
-    return (<>
-      {!hide && <Component {...rest} />}
-      {run && <Preview {...rest} />}
-    </>)
-  };
+const withPreview = (Component) => ({ run, hide, ...rest }) => (<>
+  {!hide && <Component {...rest} />}
+  {run && <Preview {...rest} />}
+</>);
 
-  return WrappedComponent;
-};
-
-export default withLiveEditor(CodeBlock);
+export default withPreview(CodeBlock);
