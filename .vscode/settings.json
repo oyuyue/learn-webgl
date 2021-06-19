@@ -8,6 +8,7 @@
     "Rasterization",
     "arccos",
     "compat",
+    "fovy",
     "highp",
     "hypot",
     "lowp",
