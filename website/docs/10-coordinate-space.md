@@ -26,9 +26,25 @@ OpenGL 只会将 XYZ 轴 -1 和 1 之间物体渲染到屏幕，这个范围之�
 
 我们现在来将这些概念全部串起来，一个模型渲染到显示器上一共会经过哪些步骤。
 
-1. 首先提供
+1. 提供模型顶点坐标数据
+2. 运行顶点着色器，在顶点着色器中对逐顶点进行处理，进行上面提到的 MVP 变换到[标准化设备坐标](/2-coordinate.md)
+3. 顶点后处理
+    1. 图元组装，将一个个顶点组装成三角形或线等 OpenGL 支持的图元
+    2. [面剔除](/7-box.md)
+    3. 剔除平截头体外的图元(`-w <= x <= w; -w <= y <= w; -w <= z <= w`)，不同图元有不同的方式，比如三角形刚好只有一部分在外面，会生成在内部的顶点，将外部的部分剔除
+    4. 透视除法，上面提到的 `[x / w, y / w, z / w]`
+    5. 视口变换，将 NDC 空间转换到窗口空间，我通过 `gl.viewport(x, y, width, height)` 和 `gl.depthRange(near, far)` 指定窗口相关信息。
+        ```js
+        halfWidth = width / 2
+        halfHeight = height / 2
+
+        Xw = halfWidth * Xndc + x + halfWidth
+        Yw = halfHeight * Yndc + y + halfHeight
+        Zw = (far - near) / 2 * Zndc + (far + near) / 2
+        ```
+4. 光栅化，将每个单独的图元分解成离散的片段（可以理解为将 SVG 变成像素图），[varying](/5-shader.md)参数插值
+5. 运行片段着色器，处理逐片段
 
 ## gl_FragCoord
 
 ## 渲染多个立方体
-

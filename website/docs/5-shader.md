@@ -247,6 +247,12 @@ function createAttrBuffer(gl, program, attr, data) {
 
 上面代码中，我们没有使用 `drawArrays`，而是使用 `drawElements`。 它们的主要区别是 `drawArrays` 是根据 `ARRAY_BUFFER` 来渲染，`drawElements` 是根据 `ELEMENT_ARRAY_BUFFER` 来渲染（根据索引来渲染）。
 
+:::info
+
+`glDrawArray` 速度快，费内存（有重复顶点数据）。`glDrawElement` 稍微慢点，省内存（只有一份顶点数据）。
+
+:::
+
 因为我们渲染的是三维物体，需要区分哪个顶点在前哪个顶点在后。上面代码中使用 `gl.enable(gl.DEPTH_TEST)` 启用了深度测试，并且使用 `gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)` 同时重置颜色缓存和深度缓存。深度缓存映射可以回顾[坐标系](/2-coordinate.md)。
 
 :::info
