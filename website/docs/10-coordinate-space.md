@@ -51,7 +51,7 @@ OpenGL 只会将 XYZ 轴 -1 和 1 之间物体渲染到屏幕，这个范围之�
         `Zw` 是当前深度值
 4. 光栅化，将每个单独的图元分解成离散的片段（可以简单理解为将 SVG 变成像素图），[varying](/5-shader.md)参数插值
 5. 运行片段着色器，处理逐片段
-6. 逐采样处理
+6. 逐采样处理（下篇文章详细讲解）
 
 ## gl_FragCoord
 
@@ -75,15 +75,19 @@ vec4 eyePos = projectionMatrixInverse * clipPos;
 
 ## 渲染多个立方体
 
-```js
+现在让我们来用 MVP 矩阵来渲染多个立方体吧。
+
+```js {10} run
 const gl = createGl()
 
 const program = createProgramFromSource(gl, `
-attribute vec4 aPos;
-uniform mat4 uMat;
+attribute vec4 position;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
-  gl_Position = uMat * aPos;
+  gl_Position = projection * view * model * position;
 }
 `, `
 precision highp float;
@@ -100,32 +104,47 @@ const indexBuffer = gl.createBuffer()
 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
 gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, box.index.value, gl.STATIC_DRAW)
 
-const [posLoc] = createAttrBuffer(gl, program, 'aPos', box.position.value)
+const [posLoc] = createAttrBuffer(gl, program, 'position', box.position.value)
 gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0)
 gl.enableVertexAttribArray(posLoc)
 
 const camera = new Camera()
-camera.position.x = camera.position.y = camera.position.z = 2
+camera.position.x = camera.position.y = 0
+camera.position.z = 5
 camera.lookAt([0, 0, 0])
-const matLoc = gl.getUniformLocation(program, 'uMat')
-gl.uniformMatrix4fv(matLoc, false, Mat4.multiply(
-  Mat4.perspective(45 * Math.PI / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 100),
-  camera.viewMatrix
-))
+const viewLoc = gl.getUniformLocation(program, 'view')
+gl.uniformMatrix4fv(viewLoc, false, camera.viewMatrix)
 
+const perLoc = gl.getUniformLocation(program, 'projection')
+gl.uniformMatrix4fv(perLoc, false, Mat4.perspective(45 * Math.PI / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 100))
 
+const modelLoc = gl.getUniformLocation(program, 'model')
 
 gl.enable(gl.DEPTH_TEST)
 gl.enable(gl.CULL_FACE)
 gl.clearColor(0, 0, 0, 0)
-gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-gl.drawElements(gl.TRIANGLES, box.index.value.length, gl.UNSIGNED_SHORT, 0)
 
-function drawBox(matLoc, x, y) {
-  gl.uniformMatrix4fv(matLoc, false, Mat4.multiply(
-    Mat4.perspective(45 * Math.PI / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 100),
-    camera.viewMatrix
-  ))
+let r = 0
+render()
+
+function render() {
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+  const rotation = Mat4.fromYRotation(r)
+
+  drawBox(-1, 1, 0, rotation)
+  drawBox(1, 1, 0, rotation)
+  drawBox(1, -1, 0, rotation)
+  drawBox(-1, -1, 0, rotation)
+  drawBox(0, 0, 1, rotation)
+  drawBox(0, 0, -1, rotation)
+
+  r += 0.01
+
+  requestAnimationFrame(render)
+}
+
+function drawBox(x, y, z, rotation) {
+  gl.uniformMatrix4fv(modelLoc, false, Mat4.multiply(rotation, Mat4.fromTranslation([x, y, z])))
   gl.drawElements(gl.TRIANGLES, box.index.value.length, gl.UNSIGNED_SHORT, 0)
 }
 

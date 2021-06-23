@@ -190,4 +190,9 @@ A × B 矢量会有两个方向，那么是哪个朝向的矢量呢？
 
 ## 矩阵
 
-
+$$
+\begin{bmatrix}
+   a & b \\
+   c & d
+\end{bmatrix}
+$$
