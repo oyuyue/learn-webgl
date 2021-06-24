@@ -220,7 +220,7 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
     for (let i = 0; i < vSeg; i++) {
       for (let j = 0; j < uSeg; j++) {
         a = numVertex + j + maxU * i
-        b = numVertex + j + maxV * (i + 1)
+        b = numVertex + j + maxU * (i + 1)
         c = b + 1
         d = a + 1
         index.push(a, b, c, a, c, d)

@@ -17,20 +17,23 @@ class Renderer {
 
 class Program {
   constructor(renderer, { vs, fs, uniforms = {}, cullFace = renderer.gl.BACK } = {}) {
-    this.renderer = renderer
     const gl = renderer.gl
+
+    this.renderer = renderer
     this.uniforms = uniforms
     this.cullFace = cullFace
+    this.program = gl.createProgram()
 
     const v = createShader(gl, gl.VERTEX_SHADER, vs)
     const f = createShader(gl, gl.FRAGMENT_SHADER, fs)
-    this.program = gl.createProgram()
     gl.attachShader(this.program, v)
     gl.attachShader(this.program, f)
     gl.linkProgram(this.program)
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(this.program))
     }
+    gl.deleteShader(v)
+    gl.deleteShader(f)
 
     this.uniformMap = new Map()
     const numUnis = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
@@ -166,7 +169,13 @@ class PlaneGeometry extends Geometry {
 
 class BoxGeometry extends Geometry {
   constructor() {
-    super(createBox(1, 1, 1, 1, 1, 1))
+    super(createBox())
+  }
+}
+
+class SphereGeometry extends Geometry {
+  constructor() {
+    super(createSphere())
   }
 }
 
@@ -223,15 +232,16 @@ class Camera extends Node {
 }
 
 class Mesh extends Node {
-  constructor(geometry, program) {
+  constructor(geometry, program, { mode = 0x0004 }) {
     super()
     this.geometry = geometry
     this.program = program
+    this.mode = mode
   }
 
   draw(renderer) {
     this.program.use()
-    this.geometry.draw(renderer, this.program, renderer.gl.TRIANGLES)
+    this.geometry.draw(renderer, this.program, this.mode)
   }
 }
 
@@ -271,7 +281,7 @@ function createPlane(width = 1, height = 1, widthSegments = 1, heightSegments = 
   for (let i = 0; i < heightSegments; i++) {
     for (let j = 0; j < widthSegments; j++) {
       a = j + maxWS * i;
-      b = j + maxHS * (i + 1);
+      b = j + maxWS * (i + 1);
       c = b + 1;
       d = a + 1;
       index.push(a, b, c, a, c, d)
@@ -327,7 +337,7 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
     for (let i = 0; i < vSeg; i++) {
       for (let j = 0; j < uSeg; j++) {
         a = numVertex + j + maxU * i
-        b = numVertex + j + maxV * (i + 1)
+        b = numVertex + j + maxU * (i + 1)
         c = b + 1
         d = a + 1
         index.push(a, b, c, a, c, d)
@@ -335,6 +345,55 @@ function createBox(width = 1, height = 1, depth = 1, widthSeg = 1, heightSeg = 1
     }
 
     numVertex += (maxU * maxV)
+  }
+
+  return createGeometryResult(
+    new Float32Array(position),
+    numVertex > 65536 ? new Uint32Array(index) : new Uint16Array(index),
+  )
+}
+
+function createSphere(
+  radius = 1,
+  widthSegments = 8,
+  heightSegments = 6,
+  phiStart = 0,
+  phiLength = Math.PI * 2,
+  thetaStart = 0,
+  thetaLength = Math.PI
+) {
+  const maxWS = widthSegments + 1
+  const maxHS = heightSegments + 1
+  const thetaEnd = Math.min(thetaStart + thetaLength, Math.PI)
+  const numVertex = maxWS * maxHS
+
+  const position = []
+  const index = []
+
+  let u, v;
+  for (let i = 0; i < maxHS; i++) {
+    v = i / heightSegments
+    for (let j = 0; j < maxWS; j++) {
+      u = j / widthSegments
+      position.push(
+        -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength),
+        radius * Math.cos(thetaStart + v * thetaLength),
+        radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength)
+      )
+    }
+  }
+
+  let a, b, c, d
+  for (let i = 0; i < heightSegments; i++) {
+    for (let j = 0; j < widthSegments; j++) {
+      a = j + maxWS * i;
+      b = j + maxWS * (i + 1);
+      c = b + 1;
+      d = a + 1;
+
+      if (i !== 0 || thetaStart > 0) index.push(d, a, c)
+      if (i !== (heightSegments - 1) || thetaEnd < Math.PI) index.push(a, b, c)
+    }
   }
 
   return createGeometryResult(
