@@ -100,6 +100,17 @@ class Mat4 {
     ]
   }
 
+  static fromZRotation(rad) {
+    const s = Math.sin(rad)
+    const c = Math.cos(rad)
+    return [
+      c, s, 0, 0,
+      -s, c, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ]
+  }
+
   static multiply(a, b, out = []) {
     const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
     const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];

@@ -13,9 +13,6 @@ module.exports = {
   organizationName: 'woopen', // Usually your GitHub org/user name.
   projectName: 'learn-webgl', // Usually your repo name.
   themeConfig: {
-    colorMode: {
-      defaultMode: 'dark',
-    },
     hideableSidebar: true,
     navbar: {
       title: 'Learn WebGL',
