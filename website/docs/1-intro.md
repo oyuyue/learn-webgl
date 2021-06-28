@@ -1,6 +1,6 @@
 # 介绍
 
-WebGL（Web图形库）是一个JavaScript API，可在任何兼容的 Web 浏览器中渲染高性能的交互式 3D 和 2D 图形或大量计算（机器学习），而无需使用插件，由非营利 Khronos Group 设计和维护。
+WebGL（Web图形库）是一个JavaScript API，可在任何兼容的 Web 浏览器中渲染高性能的交互式 3D 和 2D 图形或大量计算（机器学习等），而无需使用插件，由非营利 Khronos Group 设计和维护。
 
 使用 WebGL 的方式和 canvas 2d 类似，都是通过 `getContext` 方法获取渲染上下文。
 
@@ -64,14 +64,34 @@ Display(colors) // 渲染到屏幕
 
 ## 例子
 
-WebGL 有非常多，非常酷的例子，下面列举一些不错例子。（学完这个系列教程你也可以做出下面这些炫酷的程序哦~）
+WebGL 有非常多非常酷的例子，下面列举一些不错例子。
 
 ### ThreeJS
 
-ThreeJS 中有非常多炫酷的例子，可以点击的链接进入官网查看。
-
-[![image](https://user-images.githubusercontent.com/25923128/120910186-50140d80-c6af-11eb-9a6d-f766c5d10a03.png)](https://threejs.org/)
+[![](https://user-images.githubusercontent.com/25923128/120910186-50140d80-c6af-11eb-9a6d-f766c5d10a03.png)](https://threejs.org/)
 
 [https://threejs.org/](https://threejs.org/)
 
-### 
+### WebGL Samples
+
+[![](https://user-images.githubusercontent.com/25923128/123609386-325f4180-d832-11eb-94b9-d23a5e6dd1d8.png)](http://webglsamples.org/)
+
+[http://webglsamples.org/](http://webglsamples.org/)
+
+### Experiments with Google
+
+[![](https://user-images.githubusercontent.com/25923128/123610777-7e5eb600-d833-11eb-8f56-d5714962cdef.png)](https://experiments.withgoogle.com/)
+
+[https://experiments.withgoogle.com/](https://experiments.withgoogle.com/)
+
+### Adult Swim
+
+[![](https://user-images.githubusercontent.com/25923128/123611113-d85f7b80-d833-11eb-89ce-e047c7dcc2b4.png)](https://www.adultswim.com/etcetera/)
+
+[https://www.adultswim.com/etcetera/](https://www.adultswim.com/etcetera/)
+
+### Evan Wallace
+
+[![](https://user-images.githubusercontent.com/25923128/123612768-70aa3000-d835-11eb-8d2c-b1b59ca30d5f.png)](http://madebyevan.com/)
+
+[http://madebyevan.com/](http://madebyevan.com/)

@@ -7,13 +7,13 @@ const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d')
 ```
 
-![image](https://user-images.githubusercontent.com/25923128/120576159-e993b300-c454-11eb-881c-dd2b169a9f36.png)
+![](https://user-images.githubusercontent.com/25923128/120576159-e993b300-c454-11eb-881c-dd2b169a9f36.png)
 
 canvas 2d 的坐标原点在左上角，X 轴和 Y 轴的正值分别向右和向下。
 
 WebGL 的坐标系和 OpenGL 一样，它更符合我们的常识一点。
 
-![image](https://user-images.githubusercontent.com/25923128/120579185-a982ff00-c459-11eb-9d8e-0fa6de2103d3.png)
+![](https://user-images.githubusercontent.com/25923128/120579185-a982ff00-c459-11eb-9d8e-0fa6de2103d3.png)
 
 原点在正中间，右边为 X 轴正方向，上面为 Y 轴正方向。
 
@@ -21,13 +21,13 @@ WebGL 的坐标系和 OpenGL 一样，它更符合我们的常识一点。
 
 当 Z 轴正值朝外，称为坐标系为右手坐标系，当 Z 轴正值朝内称为左手坐标系。可以伸出双手像下图一样比划下，就知道为什么称为左手坐标系和右手坐标系了。
 
-![image](https://user-images.githubusercontent.com/25923128/120896520-85d7d880-c654-11eb-9876-62aae30a6a6d.png)
+![](https://user-images.githubusercontent.com/25923128/120896520-85d7d880-c654-11eb-9876-62aae30a6a6d.png)
 
 左手坐标系和右手坐标系还有一个区别，是它们的旋转正方向。当绕 Z 轴旋转 90° 时，是顺时针还是逆时针旋转呢？
 
 还是伸出双手，握拳，大拇指伸出，大拇指指向旋转轴的正方向，其他手指的弯曲方向就是旋转正方向。
 
-![image](https://user-images.githubusercontent.com/25923128/120897567-714a0f00-c659-11eb-939d-f1e539ff8f41.png)
+![](https://user-images.githubusercontent.com/25923128/120897567-714a0f00-c659-11eb-939d-f1e539ff8f41.png)
 
 ## 标准化设备坐标
 

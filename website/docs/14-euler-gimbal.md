@@ -8,7 +8,7 @@
 
 我们还可以用欧拉角（Euler angles）表示旋转，称作欧拉角是因为欧拉证明，任何一个 3D 空间的旋转，都可以拆分为沿着自身三个坐标轴的旋转。我们一般称为这三个旋转为**偏航-俯仰-翻滚**（Yaw-Pitch-Roll 或 Heading-Pitch-Bank），我们可以理解为左右摇头-上下点头-左右歪头。也就是分别绕 Y 轴、X 轴和 Z 轴旋转。当然旋转的顺序也不一定非要是 YXZ，也可以 XYZ 等其他旋转顺序，比如 ThreeJS 的默认顺序就是 [XYZ](https://github.com/mrdoob/three.js/blob/dev/src/math/Euler.js#L319)。
 
-![image](https://user-images.githubusercontent.com/25923128/123463150-c2786d80-d61d-11eb-97a3-c692be22b365.png)
+![](https://user-images.githubusercontent.com/25923128/123463150-c2786d80-d61d-11eb-97a3-c692be22b365.png)
 
 我们使用的是右手坐标系和旋转正方向和[坐标系](/2-coordinate.md)章节中一样，从轴的正值看向负值，逆时针旋转是旋转正方向。
 
@@ -103,7 +103,7 @@ if (Pitch == -90 || Pitch == 90) Roll = 0
 
 欧拉角的另一个缺点是插值问题。在两个定向之间插值，给定参数 `t` 它的大小是 0 到 1。如果它为 0.5 我们就可以获得两个定向中间的一个定向。但是欧拉角有两个方向可以插值。 
 
-![image](https://user-images.githubusercontent.com/25923128/123501374-fd5abf80-d676-11eb-859c-0be5ed05494c.png)
+![](https://user-images.githubusercontent.com/25923128/123501374-fd5abf80-d676-11eb-859c-0be5ed05494c.png)
 
 如上图所示，这两个定向之间相差 20 度，如果我们插值简单的线性插值，那么会绕一大圈旋转 340 度，而不是 20 度。要解决这个问题，我们需要将插值角度限制在 $(-180°, 180°]$ 之间。
 
@@ -125,35 +125,41 @@ function lerp(rad1, rad2, t) {
 
 ## 万向节死锁
 
-万向节死锁（Gimbal lock）是欧拉角根本性的问题，我们并不能通过一些方法解决这个问题。无论用什么顺序（XYZ，YZX 等）去旋转，只要第二个轴旋转角度是正负 90 度就会发生万向节死锁问题，当第二轴旋转正负 90 度时，第一个轴和第三个轴将会重叠在一起，也就是说这时候丢失了一个自由度，只有两个旋转自由度。我们很难自己去想象这种情形，建议查看这个演示动画[https://www.bilibili.com/video/av756302699/](https://www.bilibili.com/video/av756302699/)。
+万向节死锁（Gimbal lock）是欧拉角根本性的问题，我们并不能通过一些方法来解决这个问题。无论用什么顺序（XYZ，YZX 等）去旋转，只要第二个轴旋转角度是正负 90 度就会发生万向节死锁问题。当第二轴旋转正负 90 度时，第一个轴和第三个轴将会重叠在一起，也就是说这时候丢失了一个自由度，只有两个旋转自由度。我们很难自己去想象这种情形，建议查看这个[演示动画](https://www.bilibili.com/video/av756302699/)。
 
 现在有 ZYX 顺序的旋转，其中 Y 轴旋转为 90 度。我们可以看到下图中 X 轴的旋转和 Z 轴的旋转对相同轴的旋转。 
 
-![image](https://user-images.githubusercontent.com/25923128/123503022-dd30fd80-d682-11eb-8cc9-aa5a6d801154.png)
+![](https://user-images.githubusercontent.com/25923128/123503022-dd30fd80-d682-11eb-8cc9-aa5a6d801154.png)
 
 因为欧拉角是按照体轴旋转，旋转顺序是父子关系，父轴旋转会带动子轴旋转，上图中 Y 轴旋转 90 度，带动它的子轴 X 轴旋转 90 度，使 X 轴与 Z 轴重合。
 
 我们也可以从公式来验证这一点。
 
-```js
-E = Rz(b) * Ry(PI / 2) * Rx(a)
-  = [
-    0,  cos(b) * sin(a) − cos(a) * sin(b), sin(a) * sin(b) + cos(a) * cos(b),
-    0,  sin(a) * sin(b) + cos(a) * cos(b), cos(a) * sin(b) − cos(b) * sin(a),
-    -1, 0,                                 0
-  ]
-  = [
-    0,  sin(a − b), cos(a − b)
-    0,  cos(a − b), −sin(a − b)
-    -1, 0,          0
-  ]
-  = Ry(PI / 2) * Rx(a - b)
-```
+$$
+\begin{aligned}
+  E&=R_z(b) * R_y(\frac{\pi}{2}) *R_x(a) \\
+  &=\begin{bmatrix}
+   0 & cos(b)sin(a)-cos(a)sin(b) & sin(a)sin(b)+cos(a)cos(b) \\
+   0 & sin(a)sin(b)+cos(a)cos(b) & cos(a)sin(b)-cos(b)sin(a) \\
+   -1 & 0 & 0
+  \end{bmatrix} \\
+  &=\begin{bmatrix}
+   0 & sin(a-b) & cos(a-b) \\
+   0 & cos(a-b) & -sin(a-b) \\
+   -1 & 0 & 0
+  \end{bmatrix} \\
+  &=R_y(\frac{\pi}{2}) * R_x(a-b)
+\end{aligned}
+$$
 
 通过上面公式我们可以发现，绕三个轴旋转，其实最终是绕两个轴旋转，我们丢失了一个轴自由度。
 
 需要注意的是万向节死锁问题，并不是说有欧拉角无法描述的定向。而是两个定向之间的插值问题，如果看了上方视频，可以发现当第二个轴旋转 90 度时，让它再旋转到另一个定向，会发生不自然的旋转，这可能就会照成物体突然晃动等问题。如下图所示，我们期望的是第二个旋转，而不是第一个不自然的旋转。
 
-![image](https://user-images.githubusercontent.com/25923128/123503690-14a1a900-d687-11eb-8a48-5761e06e8e5f.png)
+![](https://user-images.githubusercontent.com/25923128/123503690-14a1a900-d687-11eb-8a48-5761e06e8e5f.png)
 
 要避免万向节死锁问题，我们可以用四元数来描述定向，这将在下一篇文章介绍。
+
+## 欧拉角转矩阵
+
+## 矩阵转欧拉角

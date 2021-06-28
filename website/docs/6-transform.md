@@ -4,11 +4,10 @@
 
 下面描述的各种变换中除了平移其他都是线性变换，任何线性变换都会将零矢量变换成零矢量，同时线性变换需要满足下方两个条件。
 
-```js
-F(a + b) = F(a) + F(b)
-
+$$
+F(a+b) = F(a) + F(b) \\
 F(ka) = kF(a)
-```
+$$
 
 大家可以理解成线性变换不会使直线扭曲，变换后的平行线将继续平行。
 
@@ -54,7 +53,7 @@ function translate([x, y], dx = 10, dy = 10) {
 
 要将一个元素，只需要将它的坐标乘上一个缩放因子就行了，比如这个正方形缩放 0.5 倍，它的新坐标就为 `[[0,0],[0,50],[50,50],[50,0]]`。
 
-![image](https://user-images.githubusercontent.com/25923128/121117746-3f989a00-c84b-11eb-86ee-e284c758bad6.png)
+![](https://user-images.githubusercontent.com/25923128/121117746-3f989a00-c84b-11eb-86ee-e284c758bad6.png)
 
 我们可以使用两个缩放因子来分别缩放 X 轴和 Y 轴。
 
@@ -80,7 +79,7 @@ function skew([x, y]) {
 }
 ```
 
-![image](https://user-images.githubusercontent.com/25923128/121117699-255ebc00-c84b-11eb-86c0-63fee61d149d.png)
+![](https://user-images.githubusercontent.com/25923128/121117699-255ebc00-c84b-11eb-86c0-63fee61d149d.png)
 
 我们知道 CSS 里面也有错切方法，不过 CSS 中的 `skew` 函数支持设置倾斜角度。
 
@@ -105,24 +104,27 @@ function skew([x, y], sx = 0, sy = 0) {
 
 旋转是这几个变换中最难的一个。要知道如何旋转一个物体，我们可以从下面这幅图开始。
 
-![image](https://user-images.githubusercontent.com/25923128/121728695-3136d080-cb20-11eb-8307-3f81ff836e85.png)
+![](https://user-images.githubusercontent.com/25923128/121728695-3136d080-cb20-11eb-8307-3f81ff836e85.png)
 
-根据三角函数，我们知道 P 点的 `x` 为 `r * cos(a)`，`y` 为 `r * sin(a)`。我们将 P 点旋转 `a` 得到 P' 点，同样可以知道 P' 点的坐标为 `[r * cos(a + b), r * sin(a + b)]`。
+根据三角函数，我们知道 $P$ 点的 $x$ 为 $r * cos(a)$ ，$y$ 为 $r * sin(a)$ 。我们将 $P$ 点旋转 $a$ 得到 $P'$ 点，同样可以知道 $P'$ 点的坐标为 $[r * cos(a + b), r * sin(a + b)]$ 。
 
 根据三角函数两角和公式。
 
-```js
-sin(a +- b) = sin(a) * cos(b) +- cos(a) * sin(b)
-cos(a +- b) = cos(a) * cos(b) -+ sin(a) * sin(b)
-```
+$$
+sin(a \pm b) = sin(a)cos(b) \pm cos(a)sin(b) \\
+cos(a \pm b) = cos(a)cos(b) \mp sin(a)sin(b)
+$$
 
-我们将 P' 点坐标分解为。
+我们将 $P'$ 点坐标分解为。
 
-```js
-P' = [r * cos(a + b), r * sin(a + b)]
-   = [r * (cos(a) * cos(b) - sin(a) * sin(b)), r * (sin(a) * cos(b) + cos(a) * sin(b))]
-   = [P.x * cos(b) - P.y * sin(b), P.x * sin(b) + P.y * cos(b)]
-```
+
+$$
+\begin{aligned}
+  P'&=[r * cos(a + b), r * sin(a + b)] \\
+  &=[r * (cos(a) * cos(b) - sin(a) * sin(b)), r * (sin(a) * cos(b) + cos(a) * sin(b))] \\
+  &=[P.x * cos(b) - P.y * sin(b), P.x * sin(b) + P.y * cos(b)]
+\end{aligned}
+$$
 
 现在我们得到了旋转公式，套用公式就可以写出旋转函数。
 
@@ -136,64 +138,63 @@ function rotate([x, y], deg = 0) {
 }
 ```
 
-![image](https://user-images.githubusercontent.com/25923128/121117617-019b7600-c84b-11eb-9677-04020c5ae3cd.png)
+![](https://user-images.githubusercontent.com/25923128/121117617-019b7600-c84b-11eb-9677-04020c5ae3cd.png)
 
 ## 矩阵
 
 上面所有的变换公式我们还可以写成矩阵的形式。例如下方将缩放变换变成矩阵形式。
 
-```js
-scaleMatrix = [
-  sx, 0,
-  0,  sy
-]
-
-position = [
-  x,
-  y
-]
-
-scaledPosition = scaleMatrix * position
-               = [sx * x + 0 * y, 0 * x + sy * y]
-               = [sx * x, sy * y]
-```
+$$
+\begin{aligned}
+scaledPosition&=\begin{bmatrix}
+   sx & 0 \\
+   0 & sy
+\end{bmatrix}
+\begin{bmatrix}
+   x \\
+   y
+\end{bmatrix} \\
+&=\begin{bmatrix}
+   sx * x \\
+   sy * y
+\end{bmatrix}
+\end{aligned}
+$$
 
 同样的错切可以用这个矩阵。
 
-```js
-skewMatrix = [
-  1,      tan(θ),
-  tan(θ), 1
-]
-```
+$$
+skewMatrix=\begin{bmatrix}
+   1 & tan(\theta) \\
+   tan(\theta) & 1
+\end{bmatrix}
+$$
 
 旋转可以用这个矩阵。
 
-```js
-rotationMatrix = [
-  cos(θ), -sin(θ), 
-  sin(θ), cos(θ)
-]
-```
+$$
+rotationMatrix=\begin{bmatrix}
+   cos(\theta) & -sin(\theta) \\
+   sin(\theta) & cos(\theta)
+\end{bmatrix}
+$$
 
 需要注意我们使用的是列矢量，如果使用的是横矢量（也就是矢量在矩阵左边），需要将旋转矩阵转置下。
 
-```js
-rotationMatrix = [
-  cos(θ),  sin(θ), 
-  -sin(θ), cos(θ)
-]
-
-[x, y] * rotationMatrix
-```
+$$
+\begin{bmatrix}
+  x & y
+\end{bmatrix}\begin{bmatrix}
+   cos(\theta) & sin(\theta) \\
+   -sin(\theta) & cos(\theta)
+\end{bmatrix}
+$$
 
 对于最简单的平移变换，我们没有办法使用 `2 x 2` 矩阵来完成。要实现平移矩阵我们需要提升一个维度。
 
 ## 齐次坐标
 
-齐次坐标就是将一个原本是 `n` 维的矢量用一个 `n+1` 维矢量来表示，是指一个用于投影几何里的坐标系统，如同用于欧氏几何里的笛卡儿坐标一般。
-
-一般将新加的分量使用 `w` 表示，对于二维坐标将变为 `[x, y, w]`，三维将变成 `[x, y, z, w]`。
+齐次坐标就是将一个原本是 `n` 维的矢量用一个 `n+1` 维矢量来表示。一般将新加的分量使用 `w` 表示，对于二维坐标将变为 `[x, y, w]`，三维将变成 `[x, y, z, w]`。
 
 利用齐次坐标我们将二维点，表示在三维中 `w = 1` 的平面上，对于 `w != 1` 的点，需要将它的各个分量除以 `w` (`[x / w, y / w, w / w]`) 投影到 `w = 1` 的平面。所以齐次坐标实际上表示二维的点是 `[x / w, y / w]`。
 
@@ -201,30 +202,27 @@ rotationMatrix = [
 
 有了齐次坐标我们就可以实现平移矩阵了。
 
-```js
-translateMatrix = [
-  1, 0, dx,
-  0, 1, dy,
-  0, 0, 1
-]
+$$
+\begin{aligned}
+translated&=\begin{bmatrix}
+   1 & 0 & dx \\
+   0 & 1 & dy \\
+   0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+   x \\
+   y \\
+   1
+\end{bmatrix} \\
+&=\begin{bmatrix}
+   x + dx \\
+   y + dy \\
+   1
+\end{bmatrix}
+\end{aligned}
+$$
 
-position = [
-  x,
-  y,
-  1
-]
-
-translatedMatrix = translateMatrix * position
-                 = [x + 0 * y + dx, 0 * x + y + dy, 0 * x + 0 * y + 1 * 1]
-                 = [x + dx, y + dy, 1]
-                 = [(x + dx) / 1, (y + dy) / 1]
-                 = [x + dx, y + dy]
-```
-
-我们在 `2 x 2` 矩阵上加了一行和一列，在新增的一列中包含了平移的信息。
-
-
-如果我们对矢量进行平移变换。
+我们在 `2 x 2` 矩阵上加了一行和一列，在新增的一列中包含了平移的信息。如果我们对矢量进行平移变换。
 
 ```js
 translateMatrix * [x, y, 0] = [x, y, 0]
@@ -285,13 +283,13 @@ C = B * A
 
 ### 逆变换
 
-使用矩阵的另一个好处是可以对一个变换做它的逆变换，用于撤销原始变换。比如向右旋转 90度，那么它的逆变换就是向左旋转 90 度。
+使用矩阵的另一个好处是可以对一个变换做它的逆变换，用于撤销原始变换。比如向右旋转 90 度，那么它的逆变换就是向左旋转 90 度。
 
-```js
-F^-1(F(a)) = F(F^-1(a)) = a
-```
+$$
+F^{-1}(F(a)) = F(F^{-1}(a)) = a
+$$
 
-对一个映射 F 是可逆的需要存在一个逆运算 F^-1，满足上方式子。
+对一个映射 $F$ 是可逆的需要存在一个逆运算 $F^{-1}$ ，满足上方式子。
 
 我们可以发现上方介绍的变换都是可逆的，例如平移变换。
 
@@ -317,50 +315,54 @@ invertMatrix = [
 
 ![image](https://user-images.githubusercontent.com/25923128/121772402-c7faa000-cba7-11eb-9a96-ac152c6df98a.png)
 
-1. 首先我们可以用平移矩阵 T 将物体移动到原点。
-2. 再使用旋转矩阵 R 旋转物体
-3. 最后使用第一次平移矩阵的逆矩阵 T^-1 将物体移回原处
+1. 首先我们可以用平移矩阵 $T$ 将物体移动到原点。
+2. 再使用旋转矩阵 $R$ 旋转物体
+3. 最后使用第一次平移矩阵的逆矩阵 $T^{-1}$ 将物体移回原处
 
-```js
-T = [
-  1, 0, -dx,
-  0, 1, -dy,
-  0, 0, 1
-]
+$$
+T = \begin{bmatrix}
+  1 & 0 & -dx \\
+  0 & 1 & -dy \\
+  0 & 0 & 1
+\end{bmatrix}
+$$
+$$
+R = \begin{bmatrix}
+  cos(\theta) & -sin(\theta) & 0 \\
+  sin(\theta) & cos(\theta) & 0 \\
+  0 & 0 & 1
+\end{bmatrix}
+$$
+$$
+T^{-1} = \begin{bmatrix}
+  1 & 0 & dx \\
+  0 & 1 & dy \\
+  0 & 0 & 1
+\end{bmatrix}
+$$
 
-R = [
-  cos(θ), -sin(θ), 0
-  sin(θ), cos(θ),  0
-  0,      0,       1
-]
+根据上方旋转和平移中得出的矩阵 $T^{-1}*R$ 等于。
 
-T^-1 = [
-  1, 0, dx,
-  0, 1, dy,
-  0, 0, 1
-]
-```
-
-根据上方旋转和平移中得出的矩阵，`T^-1 * R` 等于。
-
-```js
-[
-  cos(θ), -sin(θ), dx,
-  sin(θ), cos(θ),  dy,
-  0,      0,       1
-]
-```
+$$
+\begin{bmatrix}
+   cos(\theta) & -sin(\theta) & dx \\
+   sin(\theta) & cos(\theta) & dy \\
+   0 & 0 & 1
+\end{bmatrix}
+$$
 
 我们将这些矩阵组合起来。
 
-```js
-M = T^-1 * R * T
-  = [
-    cos(θ), -sin(θ), -dx * cos(θ) + dy * sin(θ) + dx,
-    sin(θ), cos(θ),  -dx * sin(θ) + -dy * cos(θ) + dy,
-    0,      0,       1
-  ]
-```
+$$
+\begin{aligned}
+M&=T^{-1}*R*T \\
+&=\begin{bmatrix}
+  cos(\theta) & -sin(\theta) & -dx * cos(\theta) + dy * sin(\theta) + dx \\
+  sin(\theta) & cos(\theta) & -dx * sin(\theta) -dy * cos(\theta)+dy \\
+  0 & 0 & 1
+\end{bmatrix}
+\end{aligned}
+$$
 
 旋转部分还是没有，只改变了平移的部分，在仿射变换中额外的平移只改变平移部分（最后一列）。
 
@@ -370,25 +372,25 @@ M = T^-1 * R * T
 
 ### 平移矩阵
 
-```js
-[
-  1, 0, 0, dx,
-  0, 1, 0, dy,
-  0, 0, 1, dz,
-  0, 0, 0, 1
-]
-```
+$$
+\begin{bmatrix}
+1 & 0 & 0 & dx \\
+0 & 1 & 0 & dy \\
+0 & 0 & 1 & dz \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 ### 缩放矩阵
 
-```js
-[
-  sx, 0,  0,  0,
-  0,  sy, 0,  0,
-  0,  0,  sz, 0,
-  0,  0,  0,  1
-]
-```
+$$
+\begin{bmatrix}
+sx & 0 & 0 & 0 \\
+0 & sy & 0 & 0 \\
+0 & 0 & sz & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 #### 任意方向缩放
 

@@ -4,7 +4,7 @@
 
 要创建一个球，我们先要理解球坐标系。球坐标标记为 $(r, \theta, \varphi)$ ，其中 r 代表径向距离， $\theta$ 代表极角， $\varphi$ 代表方位角。也就是一个端点固定在原点的线段沿两个方向旋转一定角度得到一个球面上的点。
 
-![image](https://user-images.githubusercontent.com/25923128/123222248-548b5380-d502-11eb-85fb-b9dc7246aa9c.png)
+![](https://user-images.githubusercontent.com/25923128/123222248-548b5380-d502-11eb-85fb-b9dc7246aa9c.png)
 
 根据这篇文章 [Spherical coordinate system](https://en.wikipedia.org/wiki/Spherical_coordinate_system) 可以了解到如何将球坐标系转换到笛卡尔坐标系。其中 $r ∈ [0, ∞), θ ∈ [0, π], φ ∈ [0, 2π)$ 。
 
@@ -83,7 +83,7 @@ class SphereGeometry extends Geometry {
 
 我们可以将球展开成二维平面，就像将地球展开成地图一样。其中经线是竖线，纬线是横线。
 
-![image](https://user-images.githubusercontent.com/25923128/123234274-64f4fb80-d50d-11eb-8b02-5dd1f0e9f2c3.png)
+![](https://user-images.githubusercontent.com/25923128/123234274-64f4fb80-d50d-11eb-8b02-5dd1f0e9f2c3.png)
 
 上面代码中 `widthSegments` 表示有几个宽度片段，`heightSegments` 有几个高度片段。其他的参数是上面公式中的参数。
 

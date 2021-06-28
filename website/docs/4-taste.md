@@ -2,11 +2,11 @@
 
 在实现编写代码之前，需要知道 WebGL 只是一个光栅化引擎，它非常底层，它只能用它来画点，线和三角形，那些复杂的 3D 模型都是由一个个三角形组成。只要愿意我们可以使用 canvas 2d 来实现 3D 效果。
 
-[![image](https://user-images.githubusercontent.com/25923128/120994009-ad46b680-c7b6-11eb-82cf-9fed33463719.png)](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5)
+[![](https://user-images.githubusercontent.com/25923128/120994009-ad46b680-c7b6-11eb-82cf-9fed33463719.png)](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5)
 
 比如上方这辆汽车模型，它其实是由 267300 个三角形组成。
 
-可以点击这个链接查看这个模型详情 [https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5) 。
+点击这个链接查看模型详情[https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5](https://sketchfab.com/3d-models/the-argonaut-4982efe9a03e42e6a867c33afd863ca5) 。
 
 可能有同学会问了，为什么就是三角形，而不是 5 边形，6 边形呢？
 
@@ -96,7 +96,7 @@ gl.drawArrays( // 从数组中绘制图元
 
 渲染结果如下图。
 
-![image](https://user-images.githubusercontent.com/25923128/120929285-0d881a80-c71b-11eb-82fe-4813aeb0609e.png)
+![](https://user-images.githubusercontent.com/25923128/120929285-0d881a80-c71b-11eb-82fe-4813aeb0609e.png)
 
 可见 WebGL 的代码非常繁琐，一个简单的三角形就需要编写这么多的代码。下面将一步步的分析上面的代码。
 
