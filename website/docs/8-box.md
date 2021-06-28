@@ -1,8 +1,8 @@
 # 盒子 / 面剔除
 
-上篇文章我们学到了如何变换物体，现在我们可以让[着色器](/5-shader.md)中的立方体动起来了。
+上篇文章我们学到了如何变换物体，现在我们可以让[着色器](/6-shader.md)中的立方体动起来了。
 
-为了看见立方体所有的面，我们让立方体绕 X 和 Y 轴旋转。[上篇文章](/6-transform.md)中我们总结了各种旋转矩阵，我们可以创建一个工具矩阵类，以后可以直接使用这些工具矩阵方法。
+为了看见立方体所有的面，我们让立方体绕 X 和 Y 轴旋转。[上篇文章](/7-transform.md)中我们总结了各种旋转矩阵，我们可以创建一个工具矩阵类，以后可以直接使用这些工具矩阵方法。
 
 ```js
 class Mat4 {
@@ -64,7 +64,7 @@ class Mat4 {
 
 这里直接使用上篇文章中的旋转矩阵，需要注意这里将它转置了一下，因为 OpenGL 中的矩阵是列主序的。
 
-下面在[着色器](/5-shader.md)中的立方体代码的基础上添加新的代码。
+下面在[着色器](/6-shader.md)中的立方体代码的基础上添加新的代码。
 
 ```js {6,10,55,60-68} run
 const gl = createGl()
@@ -165,7 +165,7 @@ function createAttrBuffer(gl, program, attr, data) {
 
 上面代码中通过 `uniformMatrix4fv` 给顶点着色器传递旋转矩阵，它的第二个参数为是否转置矩阵，因为我们的矩阵就是列主序的，所以无需转置。
 
-[上篇文章](/6-transform.md)中介绍了使用矩阵的好处之一就是可以组合变换，这里我们用 `Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))` 将两个旋转结合起来，然后在应用到立方体的各个顶点，让立方体绕 X 和 Y 轴旋转起来。
+[上篇文章](/7-transform.md)中介绍了使用矩阵的好处之一就是可以组合变换，这里我们用 `Mat4.multiply(Mat4.fromXRotation(r), Mat4.fromYRotation(r))` 将两个旋转结合起来，然后在应用到立方体的各个顶点，让立方体绕 X 和 Y 轴旋转起来。
 
 ## Box
 
@@ -329,11 +329,11 @@ draw()
 
 我们可以通过三角形各个顶点的顺序来搞告诉 OpenGL 哪个是正向三角形哪个是背向三角形。
 
-![image](https://user-images.githubusercontent.com/25923128/122080604-f8a13a80-ce30-11eb-89ec-1a71171b852a.png)
+![](https://user-images.githubusercontent.com/25923128/122080604-f8a13a80-ce30-11eb-89ec-1a71171b852a.png)
 
 有两种方式描述三角形三个顶点的顺序，分别是顺时针和逆时针。默认情况 OpenGL 将逆时针顺序的三角形处理为正向三角形。我们同样可以伸出右手握拳，然后伸出大拇指，和[坐标系](/2-coordinate.md)中一样，手指的弯曲和三角形的顶点的顺序一样，如果大拇指指向你说明这个面是正面会被渲染，否则是背面会被剔除。
 
-[![image](https://user-images.githubusercontent.com/25923128/122086365-3785bf00-ce36-11eb-8594-739ecbdace5f.png)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/04%20Face%20culling/)
+[![](https://user-images.githubusercontent.com/25923128/122086365-3785bf00-ce36-11eb-8594-739ecbdace5f.png)](https://learnopengl-cn.github.io/04%20Advanced%20OpenGL/04%20Face%20culling/)
 
 默认情况面剔除是关闭的，我们需要启用它。
 
@@ -358,7 +358,7 @@ gl.frontFace(gl.CCW)
 
 现在我们回过头，再来看上面的 `createBox` 函数，在 `buildPlane` 中第一个循环计算出了面的顶点位置，第二个循环中计算了面的索引，我们求出了每个小格子的 4 个顶点，分别是 `a`，`b`，`c` 和 `d`，如下图所示。
 
-![image](https://user-images.githubusercontent.com/25923128/122088782-ac59f880-ce38-11eb-846e-53817f224358.png)
+![](https://user-images.githubusercontent.com/25923128/122088782-ac59f880-ce38-11eb-846e-53817f224358.png)
 
 然后是 `index.push(a, b, c, a, c, d)`，需要注意这个顺序非常重要，因为逆时针为正面，`a`、`b` 和 `c` 构造了一个逆时针顺序的三角形，`a`、`c` 和 `d` 构成了另一个逆时针三角形，两个三角形组成了一个正方形。
 

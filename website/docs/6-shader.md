@@ -4,7 +4,7 @@ WebGL 程序执行主要分为两个阶段，CPU 阶段和 GPU 阶段，在 CPU 
 
 GPU 中的处理过程大致如下图，其中蓝色部分是我们可以控制的（忽略几何着色器，WebGL中没有）。
 
-[![image](https://user-images.githubusercontent.com/25923128/121031222-be0a2300-c7dc-11eb-8fab-9c6a35687745.png)](https://learnopengl-cn.github.io/01%20Getting%20started/04%20Hello%20Triangle/)
+[![](https://user-images.githubusercontent.com/25923128/121031222-be0a2300-c7dc-11eb-8fab-9c6a35687745.png)](https://learnopengl-cn.github.io/01%20Getting%20started/04%20Hello%20Triangle/)
 
 之前有介绍过，WebGL 只能渲染点、线和三角形，那些复杂的 3D 模型都是一个个三角形组成的。一个三角形是由 3 个顶点组成，如果我们想渲染两个三角形，就提供 6 个顶点，WebGL 每处理完 3 个顶点后会将这三个顶点连接成一个三角形。
 
@@ -36,15 +36,15 @@ const vertex = points.map(p => vertexShader(p))
 // 获得最终的顶点位置
 ```
 
-[![vertex-shader-anim](https://user-images.githubusercontent.com/25923128/121054661-282bc380-c7ef-11eb-95d4-4064dfa677dd.gif)](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-how-it-works.html)
+[![](https://user-images.githubusercontent.com/25923128/121054661-282bc380-c7ef-11eb-95d4-4064dfa677dd.gif)](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-how-it-works.html)
 
-如上图中，我们从外部输入顶点坐标，然后在顶点着色器中对它进行矩阵运算，然后通过 `gl_Position` 变量输出新的坐标。（矩阵变换请查看[下篇文章](/6-transform.md)）
+如上图中，我们从外部输入顶点坐标，然后在顶点着色器中对它进行矩阵运算，然后通过 `gl_Position` 变量输出新的坐标。（矩阵变换请查看[下篇文章](/7-transform.md)）
 
 ### attribute 存储限定字
 
 `attribute` 只能用在顶点着色器，被用来表示逐顶点信息，比如顶点位置、顶点颜色等信息。我们可以通过它来获取外部传递过来的信息。上面例子中，我们定义了三个顶点传递给 `a_position` 变量，顶点着色器不是一次性获取到这些顶点，而是一个个的获取。
 
-[上篇文章](/4-taste.md)中我们是这样向顶点着色器传递数据的。
+[上篇文章](/5-taste.md)中我们是这样向顶点着色器传递数据的。
 
 ```js
 const positionLocation = gl.getAttribLocation(program, 'a_position')
@@ -64,7 +64,7 @@ gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
 
 在顶点着色器处理完顶点后，WebGL 还会把这些三角形进行插值，将三角形变成一个个像素，然后对每个像素执行一次片段着色器，片段着色器中使用 `gl_FragColor` 内置变量输出这个像素的颜色。
 
-[上篇文章](/4-taste.md)中的片段着色器代码如下。
+[上篇文章](/5-taste.md)中的片段着色器代码如下。
 
 ```c
 precision mediump float;
@@ -81,7 +81,7 @@ void main() {
 
 `uniform` 存储限定字，可以用在片段着色器也可以用在顶点着色器，它是全局的，在着色器程序中是独一无二的。
 
-[上篇文章](/4-taste.md)我们是这样传递数据到片段着色器中。
+[上篇文章](/5-taste.md)我们是这样传递数据到片段着色器中。
 
 ```js
 const colorLocation = gl.getUniformLocation(program, 'u_color')
@@ -270,7 +270,7 @@ function createAttrBuffer(gl, program, attr, data) {
 `varying` 有点特殊，它用于从顶点着色器向片元着色器传送数据。上面例子中我们将 `aColor` 赋值给 `vColor`，然后在片元着色器中就可以使用 `vColor` 了。
 叫 `varying` 也是有原因的，我们可以先来看看上面代码最终渲染成什么样子。
 
-![image](https://user-images.githubusercontent.com/25923128/121994270-8ea87700-cdd7-11eb-922d-6c2c7e41f837.png)
+![](https://user-images.githubusercontent.com/25923128/121994270-8ea87700-cdd7-11eb-922d-6c2c7e41f837.png)
 
 顶点着色器是逐顶点的，片段着色器是逐像素的，显然像素会比顶点多。`varying` 变量从顶点着色器向片元着色器传递时会被 OpenGL 插值，也就是我们定义了三角形 3 个顶点的颜色，三角形内部的像素都是根据这 3 个顶点颜色插值出来的。比如一个线段一个端点是红色，另一个是绿色，那么这个线段中间就是 50% 的红色和 50% 的绿色。
 

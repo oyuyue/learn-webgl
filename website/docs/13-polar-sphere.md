@@ -18,7 +18,7 @@ $$
 z = r * cos(\theta)
 $$
 
-其实根据前面[变换](/6-transform.md)中的旋转，我们自己也能推出上面的公式。
+其实根据前面[变换](/7-transform.md)中的旋转，我们自己也能推出上面的公式。
 
 ## createSphere
 
