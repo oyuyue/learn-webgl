@@ -1,6 +1,6 @@
 # 变换
 
-[上一篇文章](/6-shader.md)的最后我们渲染了一个正方形，但是只能看见它的正面。要看到它的其他面就需要对它进行变换处理了。
+[上篇文章](/6-shader.md)的最后我们渲染了一个正方形，但是只能看见它的正面。要看到它的其他面就需要对它进行变换处理了。
 
 下面描述的各种变换中除了平移其他都是线性变换，任何线性变换都会将零矢量变换成零矢量，同时线性变换需要满足下方两个条件。
 
@@ -198,7 +198,7 @@ $$
 
 利用齐次坐标我们将二维点，表示在三维中 `w = 1` 的平面上，对于 `w != 1` 的点，需要将它的各个分量除以 `w` (`[x / w, y / w, w / w]`) 投影到 `w = 1` 的平面。所以齐次坐标实际上表示二维的点是 `[x / w, y / w]`。
 
-当 `w = 0` 时，`x / 0` 是未定义的。我们可以将 `w = 0` 表示为矢量，`w != 0` 表示为位置。这和[矢量和矩阵](/3-vector.md)中区分点和矢量一致。
+当 `w = 0` 时，`x / 0` 是未定义的。我们可以将 `w = 0` 表示为矢量，`w != 0` 表示为位置。这和[矢量](/3-vector.md)中区分点和矢量一致。
 
 有了齐次坐标我们就可以实现平移矩阵了。
 
@@ -256,28 +256,28 @@ newPosition = B * (A * position)
 
 ### 旋转和平移
 
-假设 A 是旋转变换，B 是平移变换。
+下面 A 是旋转变换，B 是平移变换。
 
-```js
-A = [
-  cos(θ), -sin(θ), 0
-  sin(θ), cos(θ),  0
-  0,      0,       1
-]
-
-B = [
-  1, 0, dx,
-  0, 1, dy,
-  0, 0, 1
-]
-
-C = B * A 
-  = [
-    cos(θ), -sin(θ), dx,
-    sin(θ), cos(θ),  dy,
-    0,      0,       1
-  ]
-```
+$$
+\begin{aligned}
+  C&=B*A \\
+  &=\begin{bmatrix}
+    1 & 0 & dx \\
+    0 & 1 & dy \\
+    0 & 0 & 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    cos(\theta) & -sin(\theta) & 0 \\
+    sin(\theta) & cos(\theta) & 0 \\
+    0 & 0 & 1
+  \end{bmatrix} \\
+  &=\begin{bmatrix}
+    cos(\theta) & -sin(\theta) & dx \\
+    sin(\theta) & cos(\theta) & dy \\
+    0 & 0 & 1
+  \end{bmatrix}
+\end{aligned}
+$$
 
 可以发现，C 矩阵是将旋转和平移组合起来，最右那一列是平移部分。也就是我们可以将一个矩阵变成线性变换部分和平移部分。
 
@@ -293,19 +293,20 @@ $$
 
 我们可以发现上方介绍的变换都是可逆的，例如平移变换。
 
-```js
-matrix = [
-  1, 0, dx,
-  0, 1, dy,
-  0, 0, 1
-]
-
-invertMatrix = [
-  1, 0, -dx,
-  0, 1, -dy,
-  0, 0, 1
-]
-```
+$$
+matrix = \begin{bmatrix}
+    1 & 0 & dx \\
+    0 & 1 & dy \\
+    0 & 0 & 1
+  \end{bmatrix}
+$$
+$$
+invertMatrix = \begin{bmatrix}
+    1 & 0 & -dx \\
+    0 & 1 & -dy \\
+    0 & 0 & 1
+  \end{bmatrix}
+$$
 
 将它平移部分变为负的即可。
 
@@ -398,41 +399,51 @@ $$
 
 ![](https://user-images.githubusercontent.com/25923128/121781566-f7290580-cbd7-11eb-85ca-657b30a02c30.png)
 
-上图中将矢量 V，沿着单位矢量 N 进行缩放，缩放比例为 k，得到矢量 V'。
+上图中将矢量 $V$ ，沿着单位矢量 $N$ 进行缩放，缩放比例为 k，得到矢量 $V'$ 。
 
-将矢量 V 分解为 V∥ 和 V⊥，使得 V∥ 平行 N，V⊥ 垂直于 V∥，并且 V = V∥ + V⊥。同样的将 V' 也分为 V'∥ 和 V'⊥。
+将矢量 $V$ 分解为 $V\|$ 和 $V\bot$ ，使得 $V\|$ 平行 $N$ ， $V\bot$ 垂直于 $V\|$ ，并且 $V=V\| + V\bot$ 。同样的将 $V'$ 也分为 $V'\|$ 和 $V'\bot$ 。
 
-由于 V⊥ 垂直 N，所以它不会受到缩放操作影响，对 V 的缩放也就是对 V∥ 的缩放。
+由于 $V\bot$ 垂直 $N$ ，所以它不会受到缩放操作影响，对 $V$ 的缩放也就是对 $V\|$ 的缩放。
 
-我们可以发现 V∥ 等于 `(V · N) * N`，那么变换后 V' 就为。
+我们可以发现 $V\|$ 等于 $(V \cdot N) * N$，那么变换后 $V'$ 就为。
 
-```js
-V = V|| + V⊥
+$$
+V=V\| + V\bot
+$$
+$$
+V\| = (V \cdot N) * N
+$$
+$$
+\begin{aligned}
+  V'\bot &= V\bot \\
+  &= V-V\| \\
+  &= V-(V \cdot N) * N
+\end{aligned}
+$$
+$$
+\begin{aligned}
+  V'\| &= kV\| \\
+  &= k * (V \cdot N) * N
+\end{aligned}
+$$
+$$
+\begin{aligned}
+  V' &= V'\bot + V'\| \\
+  &= V - (V \cdot N) * N + k * (V \cdot N) * N \\
+  &= V + (k - 1) * (V \cdot N) * N
+\end{aligned}
+$$
 
-V|| = (V · N) * N
+求出了 $V'$ ，我们就可以得到在任意单位矢量 $N$ 方向，缩放 $k$ 的缩放矩阵。
 
-V'⊥ = V⊥
-    = V - V||
-    = V - (V · N) * N
-
-V'|| = k * V||
-     = k * (V · N) * N
-
-V' = V'⊥ + V'||
-   = V - (V · N) * N + k * (V · N) * N
-   = V + (k - 1) * (V · N) * N
-```
-
-求出了 V'，我们就可以得到在任意单位矢量 N 方向，缩放 k 的缩放矩阵。
-
-```js
-[
-  1 + (k - 1) * (Nx ** 2),  (k - 1) * Nx * Ny,        (k - 1) * Nx * Nz,       0,
-  (k - 1) * Nx * Ny,        1 + (k - 1) * (Ny ** 2),  (k - 1) * Nx * Nz,       0,
-  (k - 1) * Nx * Nz,        (k - 1) * Ny * Nz,        1 + (k - 1) * (Nz ** 2), 0,
-  0,                        0,                        0,                       1
-]
-```
+$$
+\begin{bmatrix}
+  1+(k-1)N_x^2 & (k-1)N_xN_y & (k-1)N_xN_z & 0 \\
+  (k-1)N_xN_y & 1+(k-1)N_y^2 & (k-1)N_xN_z & 0 \\
+  (k-1)N_xN_z & (k-1)N_yN_z & 1+(k-1)N_z^2 & 0 \\
+  0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 ### 旋转矩阵
 
@@ -442,40 +453,40 @@ V' = V'⊥ + V'||
 
 绕 X 轴旋转，X 轴坐标不变。
 
-```js
-Rx = [
-  1, 0,      0,       0
-  0, cos(θ), -sin(θ), 0
-  0, sin(θ), cos(θ),  0
-  0, 0,      0,       1
-]
-```
+$$
+R_x = \begin{bmatrix}
+   1 & 0 & 0 & 0 \\
+   0 & cos(\theta) & -sin(\theta) & 0 \\
+   0 & sin(\theta) & cos(\theta) & 0 \\
+   0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 绕 Y 轴旋转，Y 轴坐标不变。
 
-```js
-Ry = [
-  cos(θ),  0, sin(θ),  0
-  0,       1, 0,       0
-  -sin(θ), 0, cos(θ),  0
-  0,       0, 0,       1
-]
-```
+$$
+R_y = \begin{bmatrix}
+   cos(\theta) & 0 & sin(\theta) & 0 \\
+   0 & 1 & 0 & 0 \\
+   -sin(\theta) & 0 & cos(\theta) & 0 \\
+   0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 绕 Z 轴旋转，Z 轴坐标不变。
 
-```js
-Rz = [
-  cos(θ), -sin(θ), 0, 0,
-  sin(θ), cos(θ),  0, 0,
-  0,      0,       1, 0,
-  0,      0,       0, 1
-]
-```
+$$
+R_z = \begin{bmatrix}
+   cos(\theta) & -sin(\theta) & 0 & 0 \\
+   sin(\theta) & cos(\theta) & 0 & 0 \\
+   0 & 0 & 1 & 0 \\
+   0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 :::info
 
-旋转矩阵是[正交矩阵](/3-vector.md)，它的逆矩阵就等于它的转置矩阵。
+旋转矩阵是[正交矩阵](/4-matrix.md)，它的逆矩阵就等于它的转置矩阵。
 
 :::
 
@@ -485,50 +496,55 @@ Rz = [
 
 ![](https://user-images.githubusercontent.com/25923128/121803153-bf22d080-cc72-11eb-90fa-113b9bd7220a.png)
 
-和任意方向缩放中一样，上图中 V' 是矢量 V 沿单位矢量 N 旋转 θ 度后的结果。要求出 V' 的位置，我们可以将 V 和 V' 拆分成垂直和平行分量，其中平行分量平行于 N。
+和任意方向缩放中一样，上图中 $V'$ 是矢量 $V$ 沿单位矢量 $N$ 旋转 $\theta$ 度后的结果。要求出 $V'$ 的位置，我们可以将 $V$ 和 $V'$ 拆分成垂直和平行分量，其中平行分量平行于 $N$ 。
 
-我们可以发现旋转是应用在垂直分量上的，因为平行分量于旋转方向 N 平行，不受旋转影响。我们现在可以把目标放在 2 维平面上的垂直矢量 V⊥ 和 V'⊥。
+我们可以发现旋转是应用在垂直分量上的，因为平行分量于旋转方向 $N$ 平行，不受旋转影响。我们现在可以把目标放在 2 维平面上的垂直矢量 $V\bot$ 和 $V'\bot$ 。
 
-我们可以构造一个 W 矢量，W 垂直 V⊥，长度于 V⊥ 相等。W 矢量等于 N 叉乘 V⊥ （叉乘在[矢量和矩阵](/3-vector.md)中有讲）。
+我们可以构造一个 $W$ 矢量， $W$ 垂直 $V\bot$ ，长度于 $V\bot$ 相等。 $W$ 矢量等于 $N$ 叉乘 $V\bot$ （叉乘在[矢量](/3-vector.md)中有讲）。
 
-W、V⊥、V'⊥ 都在一个平面上，并且 W 与 V⊥ 垂直，我们把 W 和 V⊥ 当成水平和垂直坐标轴，根据上方讲到的二维旋转，我们可以得到。
+$W$、 $V\bot$ 、 $V'\bot$ 都在一个平面上，并且 $W$ 与 $V\bot$ 垂直，我们把 $W$ 和 $V\bot$ 当成水平和垂直坐标轴，根据上方讲到的二维旋转，我们可以得到。
 
-```js
-V'⊥ = cos(θ) * V⊥ + sin(θ) * W
-```
+$$
+V'\bot=cos(\theta)*V\bot + sin(\theta)*W
+$$
 
-那么 V' 就等于。
+那么 $V'$ 就等于。
 
-```js
-V|| = (V · N) * N
-
-V⊥ = V - V||
-   = V - (V · N) * N
-
-W = N × V⊥
-  = N × (V - V||)
-  = N × V - N × V||
-  = N × V
-
-V'⊥ = cos(θ) * V⊥ + sin(θ) * W
-    = cos(θ) * (V - (V · N) * N) + sin(θ) * (N × V)
-
-V'|| = V||
-
-V' = V'⊥ + V'||
-   = cos(θ) * (V - (V · N) * N) + sin(θ) * (N × V) + (V · N) * N
-```
+$$
+V\| =(V \cdot N)N
+$$
+$$
+\begin{aligned}
+V\bot &= V-V\| \\
+&=V-(V \cdot N)N
+\end{aligned}
+$$
+$$
+\begin{aligned}
+W &= N \times V\bot \\
+&=N \times (V - V\|) \\
+&=N \times V - N \times V\| \\
+&=N \times V
+\end{aligned}
+$$
+$$
+\begin{aligned}
+V' &= V'\bot + V'\| \\
+&=cos(\theta) * V\bot + sin(\theta) * W + (V \cdot N) * N \\
+&=cos(\theta) * (V - (V \cdot N) * N) + sin(\theta) * (N \times V) + (V \cdot N) * N
+\end{aligned}
+$$
 
 把坐标轴基矢量带入上方式子中，那么绕任意过原点轴旋转的矩阵如下。
 
-```js
-[
-  (Nx ** 2) * (1 - cos(θ)) + cos(θ),    Nx * Ny * (1 - cos(θ)) - Nz * sin(θ), Nx * Nz * (1 - cos(θ)) + Ny * sin(θ), 0
-  Nx * Ny * (1 - cos(θ)) + Nz * sin(θ), (Ny ** 2) * (1 - cos(θ)) + cos(θ),    Ny * Nz * (1 - cos(θ)) - Nx * sin(θ), 0
-  Nx * Nz * (1 - cos(θ)) - Ny * sin(θ), Ny * Nz * (1 - cos(θ)) + Nx * sin(θ), (Nz ** 2) * (1 - cos(θ)) + cos(θ),    0
-  0,                                    0,                                    0,                                    1
-]
-```
+$$
+\begin{bmatrix}
+  N_x^2(1-cos(\theta))+cos(\theta) & N_xN_y(1-cos(\theta))-N_zsin(\theta) & N_xN_z(1-cos(\theta))+N_ysin(\theta) & 0 \\
+  N_xN_y(1-cos(\theta))+N_zsin(\theta) & N_y^2(1-cos(\theta))+cos(\theta) & N_yN_z(1-cos(\theta))-N_xsin(\theta) & 0 \\
+  N_xN_z(1-cos(\theta))-N_ysin(\theta) & N_yN_z(1-cos(\theta))+N_xsin(\theta) & N_Z^2(1-cos(\theta))+cos(\theta) & 0 \\
+  0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 ## 总结
 

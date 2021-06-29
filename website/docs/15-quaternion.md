@@ -12,6 +12,62 @@
 
 ## 复数
 
+复数（Complex Number）表示为 $z=a+bi$ ，其中 $a$ 称为实部， $b$ 称为虚部分， $i^2$ 等于 $-1$ 。
+
+### 加减法
+
+复数加减法是将的对应分量相加减。
+
+$$
+z1 \pm z2=(a1 \pm a2) + (b1 \pm b2)i
+$$
+
+### 乘法
+
+用分配律来计算两个复数乘积。
+
+$$
+\begin{aligned}
+z1z2&=(a1+b1i)(a2+b2i) \\
+&=a1a2 + a1b2i + a2b1i + b1b2i^2 \\
+&=a1a2-b1b2+(a2b1+a1b2)i
+\end{aligned}
+$$
+
+### 模长和共轭
+
+复数的模长等于 $\|z\| =\sqrt{a^2+b^2}$ 。共轭是将虚部变成负 $z=a-bi$ 。复数和它的共轭相乘可以得到它的模长的平方。
+
+$$
+\begin{aligned}
+  \| z \|^2 &= (a+bi)(a-bi) \\
+  &=a^2-abi+abi+b^2 \\
+  &=a^2+b^2
+\end{aligned}
+$$
+
+### 极坐标型
+
+我们可以将复数画在二维坐标轴上。
+
+![](https://user-images.githubusercontent.com/25923128/123728977-cbd83300-d8c6-11eb-8faf-0855a379b6e4.png)
+
+从上图 $z=a+bi$ 就像一个二维矢量，我们可以发现 $a=cos(\theta)*\|z\|$ 和 $b=sin(\theta)*\|z\|$ ，我们可以将复数写成 $z=\|z\|(cos(\theta)+isin(\theta))$ 。 
+
+根据[欧拉公式](https://zh.wikipedia.org/wiki/%E6%AC%A7%E6%8B%89%E5%85%AC%E5%BC%8F)。
+
+$$
+e^{i\theta}=cos(\theta)+isin(\theta)
+$$
+
+![](https://user-images.githubusercontent.com/25923128/123728837-90d5ff80-d8c6-11eb-9b44-663b8b7c7d07.png)
+
+我们令 $r=\|z\|$ ，那么可以将复数写成 $z=re^{i\theta}$ ，如果我们只考虑旋转可以将缩放因子 $r$ 设为 $1$ 。我们可以将二维矢量看成一个复数 $v=x+yi$ ，让它乘上 $z=e^{i\theta}$ 就可以旋转 $\theta$ 度了。
+
+$$
+v'=e^{i\theta}v
+$$
+
 ## 四元数
 
 四元数（Quaternion）由 4 个数字组成，这也是它名字的由来。和复数一样它也是由实部和虚部组成，只不过它有 3 个虚部。
@@ -145,9 +201,9 @@ $$
 
 $$
 \begin{aligned}
-  q1q2&=(ae-bf-cg-dh)+\\
-  &\quad\: (be+af-dg+ch)i+\\
-  &\quad\: (ce+df+ag-bh)j+\\
+  q1q2&=(ae-bf-cg-dh)+ \\
+  &\quad\: (be+af-dg+ch)i+ \\
+  &\quad\: (ce+df+ag-bh)j+ \\
   &\quad\: (de-cf+bg+ah)k
 \end{aligned}
 $$
@@ -259,9 +315,11 @@ $$
 
 ### 指数形式
 
+和复数一样四元数也可以写成 $e^{q\theta}$
 
+### Lerp
 
-### 插值
+### Slerp
 
 ## 四元数转欧拉角
 

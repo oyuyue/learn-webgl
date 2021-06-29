@@ -2,7 +2,7 @@
 
 不知道大家有没有觉得[盒子](/8-box.md)章节中渲染的立方体看起来有点奇怪。我们在现实世界中看到的物体都是近大远小，但是我们没有做透视处理立方体远近都一样大导致看起来有点奇怪。我们这篇文章来学习两种投影方法，分别是正交投影和透视投影。其中透视投影就可以让立方体有近大远小的透视效果。下图是分别使用透视投影和正交投影对同一场景的渲染结果。
 
-![image](https://user-images.githubusercontent.com/25923128/122630761-caee1700-d0f8-11eb-8e56-d4fd5f2a3272.png)
+![](https://user-images.githubusercontent.com/25923128/122630761-caee1700-d0f8-11eb-8e56-d4fd5f2a3272.png)
 
 ## 正交投影
 
@@ -14,14 +14,14 @@
 
 正交投影也叫平行投影，它的特点是远近一样大，平行线可以保持平行。这也是三维图形投影到二维平面的最简单的方法，我们也可以非常轻松的写出正交投影矩阵。
 
-```js
-[
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 0, 0,
-  0, 0, 0, 1
-]
-```
+$$
+\begin{bmatrix}
+  1 & 0 & 0 & 0 \\
+  0 & 1 & 0 & 0 \\
+  0 & 0 & 0 & 0 \\
+  0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 上方矩阵可以将物体投影到 XY 平面上，它会保持物体的 X、Y 坐标不变将 Z 变成 0。
 
@@ -29,58 +29,56 @@
 
 假设在空间中有个盒子，我们可以通过 `left, right, bottom, top, near, far` 指定它的左右下上近远平面，我们要把这个盒子进行缩放，将它的 X、Y 和 Z 缩放到 `-1` 到 `1`，再将它移动到坐标原点，这样我们就可以将这个盒子里面所有物体就变换到了[标准化设备坐标](/2-coordinate.md)。
 
-![image](https://user-images.githubusercontent.com/25923128/122438742-9cbfe880-cfcd-11eb-9029-8498756acd92.png)
+![](https://user-images.githubusercontent.com/25923128/122438742-9cbfe880-cfcd-11eb-9029-8498756acd92.png)
 
-我们首先来缩放和移动 X 轴。
+我们首先来缩放和移动 X 轴。X 轴通过 `left` 和 `right` 控制。我们可以通过 `right - left` 获得盒子的宽度，我们要将这个宽度缩放到 `1 - (-1)`，然后再将它移动到原点，也就是将 `left` 和 `right` 移动到了 `-1` 到 `1`。我们可以写一个公式来描述这个过程。
 
-X 轴通过 `left` 和 `right` 控制。我们可以通过 `right - left` 获得盒子的宽度，我们要将这个宽度缩放到 `1 - (-1)`，然后再将它移动到原点，也就是将 `left` 和 `right` 移动到了 `-1` 到 `1`。我们可以写一个公式来描述这个过程。
+$$
+X_{ndc}=S*X_{eye}+D
+$$
 
-```js
-Xn = s * Xe + d
-```
+其中是 $X_{ndc}$ 是标准化设备坐标（NDC）， $X_{eye}$ 是我们盒子所在坐标，$S$ 是缩放的值， $D$ 是平移的值。我们要将 `right - left` 缩放到 `1 - (-1)`，那么 $S$ 就是 `2 / (right - left)`。
 
-其中是 `Xn` 是标准化设备坐标（NDC），`Xe` 是我们盒子所在坐标，`s` 是缩放的值，`d` 是平移的值。我们要将 `right - left` 缩放到 `1 - (-1)`，那么 `s` 就是 `2 / (right - left)`。
+$$
+X_{ndc}=\frac{2}{right-left}*X_{eye}+D
+$$
 
-```js
-Xn = 2 / (right - left) * Xe + d
-```
+我们再让 $X_{ndc}$ 等于 `1`，那么 $X_{eye}$ 就等于 `right`，因为最终我们就是让 `right` 等于 `1`，`left` 等于 `-1`。
 
-我们再让 `Xn` 等于 `1`，那么 `Xe` 就等于 `right`，因为最终我们就是让 `right` 等于 `1`，`left` 等于 `-1`。
+$$
+1=\frac{2}{right-left}*right+D
+$$
 
-```js
-1 = 2 / (right - left) * right + d
-```
+那么 $D$ 就等于。
 
-那么 `d` 就等于。
+$$
+D=-\frac{right+left}{right-left}
+$$
 
-```js
-d = -( (right + left) / (right - left) )
-```
-
-所以我们需要先将 X 轴缩放 `2 / (right - left)`，再平移 `-( (right + left) / (right - left) )`。
+所以我们需要先将 X 轴缩放 `2 / (right - left)`，再平移 `-((right + left) / (right - left))`。
 
 同样的方法我们可以求出 Y 轴。
 
-```js
-Yn = 2 / (top - bottom) * Ye + -( (top + bottom) / (top - bottom) )
-```
+$$
+Y_{ndc}=\frac{2}{top-bottom}*Y_{eye}-\frac{top+bottom}{top-bottom}
+$$
 
-其中 Z 轴需要特别注意下，它的 `s` 是 `-2 / (far - near)`。我们将 `s` 乘了 `-1`，这相当于翻转了一下 Z 轴，这是因为我们在其他坐标系一直使用的是右手坐标系，但是 NDC 是左手坐标系，这就让我们遇到了[盒子](/8-box.md)章节中面的颜色不一致的问题，所以我们这里翻转一下 Z 轴，也相当于把 NDC 变成右手坐标系，后面我们就可以一直默认使用右手坐标系，不用再关心 NDC 是左手坐标系的问题了。
+其中 Z 轴需要特别注意下，它的 `S` 是 `-2 / (far - near)`。我们将 `S` 乘了 `-1`，这相当于翻转了一下 Z 轴，这是因为我们在其他坐标系一直使用的是右手坐标系，但是 NDC 是左手坐标系，这就让我们遇到了[盒子](/8-box.md)章节中面的颜色不一致的问题，所以我们这里翻转一下 Z 轴，也相当于把 NDC 变成右手坐标系，后面我们就可以一直默认使用右手坐标系，不用再关心 NDC 是左手坐标系的问题了。
 
-```js
-Zn = -2 / (far - near) * Ze + -( (far + near) / (far - near) )
-```
+$$
+Z_{ndc}=-\frac{2}{far-near}*Z_{eye}-\frac{far+near}{far-near}
+$$
 
 现在我们就可以来构建正交矩阵了。
 
-```js
-[
-  2 / (r - l), 0,           0,            -(r + l) / (r - l),
-  0,           2 / (t - b), 0,            -(t + b) / (t - b),
-  0,           0,           -2 / (f - n), -(f + n) / (f - n),
-  0,           0,           0,            1,
-]
-```
+$$
+\begin{bmatrix}
+  \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\
+  0 & \frac{2}{t-b} & 0 & -\frac{t+b}{t-b} \\
+  0 & 0 & -\frac{2}{f-n} & -\frac{f+n}{f-n} \\
+  0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 
 我们将它加到我们的工具库里面。
 
@@ -206,101 +204,107 @@ function createAttrBuffer(gl, program, attr, data) {
 
 我们可以将平截头体的远平面的宽高往下压，把平截头体压成和正交投影中的盒子形状，然后再做一次正交投影，这样就可以将平截头体变到 NDC 了。
 
-假设在平截头体中有一个点 `[Xe, Ye, Ze]`，我们要将 `Xe` 压缩成 `Xp`，`Ye` 压缩成 `Yp`。
+假设在平截头体中有一个点 $[x_e, y_e, z_e]$ ，我们要将 $x_e$ 压缩成 $x_p$ ， $y_e$ 压缩成 $y_p$ 。
 
 <img src="https://user-images.githubusercontent.com/25923128/122530059-adfe0900-d050-11eb-8f3a-184f4644e37a.png" width="500"></img>
 
-我们首先来压缩 X 轴，如上图，我们首先将它投影到近平面上，我们可以发现与原点的连线形成两个相似三角形，那么 `Xp` 就等于 `-n / Ze * Xe`。
+我们首先来压缩 X 轴，如上图，我们首先将它投影到近平面上，我们可以发现与原点的连线形成两个相似三角形，那么 $x_p$ 就等于 $-\frac{n}{z_e}*x_e$。
 
 <img src="https://user-images.githubusercontent.com/25923128/122545855-e86fa200-d060-11eb-87bb-eff1ca78038e.png" width="500"></img>
 
-同样的 `Yp` 等于 `-n / Ze * Ye`。
+同样的 $y_p$ 等于 $-\frac{n}{z_e}*y_e$。
 
-根据齐次除法，我们可以把一个点表示为 `[nx, ny, ?, -z]`，这样实际表示的就是 `[n / -z * x, n / -z * y, ? / -z]` 和上面推导的一样。那么我们可以构建如下矩阵。
+观察上面公式，我们发现它们都乘 $n$ 和除 $-z_e$ ，利用这些信息我们可以先构建如下矩阵。
 
-```js
-[
-  n, 0, 0,  0,
-  0, n, 0,  0,
-  ?, ?, ?,  ?,
-  0, 0, -1, 0
-]
-```
+$$
+\begin{bmatrix}
+  n & 0 & 0 & 0 \\
+  0 & n & 0 & 0 \\
+  ? & ? & ? & ? \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+$$
 
-通过上面信息，我们知道了这个矩阵中的 3 行，还有 Z 轴目前还不知道。
+我们将最后一行的第三个设置为 `-1` ，可以将 `-z_e` 复制到齐次坐标中的 `w` 分量中，利用齐次除法就可以让 `X_e` 除 `-Z_e` 了。矩阵的第三行还不知道，接下来让我们再来看看 Z 轴是是如何变化的。
 
-如果一个点在近平面上，那么它的 Z 值是不变的。假设近平面一个点 `[x, y, -n, 1]` 将上面矩阵作用到这个点可以得到 `[n * x, n * y, ? , n]`，因为这个点变换后不变，所以 `?` 等于 `-n ^ 2`。
+如果一个点在近平面上，那么它的 Z 值是不变的。假设近平面一个点 $[x,y,-n,1]$ 将上面矩阵作用到这个点可以得到 $[nx,ny,?,n]$，因为我们需要这个点变换后不变，所以 `?` 等于 $-n^2$ 。
 
-```js
-[
-  n, 0, 0,  0,
-  0, n, 0,  0,
-  0, 0, A,  B,
-  0, 0, -1, 0
-]
-```
+$$
+\begin{bmatrix}
+  n & 0 & 0 & 0 \\
+  0 & n & 0 & 0 \\
+  0 & 0 & A & B \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+$$
 
 通过上面信息我们知道 Z 的值和 X 和 Y 是不相关的，我们可以给第三行前两个设置为 0，后两项未知我们设为 A 和 B。用第三行点乘这个点 `[x, y, -n, 1]`
 
-```js
-[0, 0, A, B] · [x, y, -n, 1] = -n ** 2
+$$
+\begin{aligned}
+  [0, 0, A, B] \cdot [x,y,-n,1] &= -n^2 \\
+A*-n+B&=-n^2
+\end{aligned}
+$$
 
-A * -n + B = -n ** 2
-```
+同样如果一个点在远平面上，那么变换后它的 Z 值是不变的，我们取远平面上一个特殊的点 $[0,0,-f,1]$ 它变换后不变，我们可以得到另一个式子。
 
-同样如果一个点在远平面上，那么变换后它的 Z 值是不变的，我们取远平面上一个特殊的点 `[0, 0, -f, 1]` 它变换后不变。我们可以得到另一个式子。
-
-```js
-[0, 0, A, B] · [0, 0, -f, 1] = -f ** 2
-
-A * -f + B = -f ** 2
-```
+$$
+\begin{aligned}
+[0,0,A,B] \cdot [0,0,-f,1] &= -f^2 \\
+A*-f+B=-f^2
+\end{aligned}
+$$
 
 解上方两个式子，我们可以求出 A 和 B 的值。
 
-```js
-A = n + f
-
-B = n * f
-```
+$$
+\begin{aligned}
+A&=n+f\\
+B&=nf
+\end{aligned}
+$$
 
 那么最终我们就得到了透视到正交的矩阵。
 
-```js
-[
-  n, 0, 0,     0,
-  0, n, 0,     0,
-  0, 0, n + f, n * f,
-  0, 0, -1,    0
-]
-```
+$$
+\begin{bmatrix}
+  n & 0 & 0 & 0 \\
+  0 & n & 0 & 0 \\
+  0 & 0 & n+f & nf \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+$$
 
 把平截头体变成盒子后，我们再来做一次正交投影，那么我们就可以得到透视投影矩阵。
 
-```js
-Mp = Mo * (Mp -> o)
-   = [
-      2 / (r - l), 0,           0,            -(r + l) / (r - l),
-      0,           2 / (t - b), 0,            -(t + b) / (t - b),
-      0,           0,           -2 / (f - n), -(f + n) / (f - n),
-      0,           0,           0,            1,
-    ] * [
-      n, 0, 0,     0,
-      0, n, 0,     0,
-      0, 0, n + f, n * f,
-      0, 0, -1,    0
-    ]
-    = [
-      2 * n / (r - l), 0,               (r + l) / (r - l),  0,
-      0,               2 * n / (t - b), (t + b) / (t - b),  0,
-      0,               0,               -(f + n) / (f - n), -2 * n * f / (f - n),
-      0,               0,               -1,                 0
-    ]
-```
+$$
+\begin{aligned}
+M_p&=M_o * M_{p \to o} \\
+&=\begin{bmatrix}
+  \frac{2}{r-l} & 0 & 0 & -\frac{r+l}{r-l} \\
+  0 & \frac{2}{t-b} & 0 & -\frac{t+b}{t-b} \\
+  0 & 0 & -\frac{2}{f-n} & -\frac{f+n}{f-n} \\
+  0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+  n & 0 & 0 & 0 \\
+  0 & n & 0 & 0 \\
+  0 & 0 & n+f & nf \\
+  0 & 0 & -1 & 0
+\end{bmatrix} \\
+&=\begin{bmatrix}
+  \frac{2n}{r-l} & 0 & \frac{r+l}{r-l} & 0 \\
+  0 & \frac{2n}{t-b} & \frac{t+b}{t-b} & 0 \\
+  0 & 0 & -\frac{f+n}{f-n} & -\frac{2nf}{f-n} \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+\end{aligned}
+$$
 
-透视矩阵还有个特点，是我们将平截头体的远平面向下压时，平截头体内点的 Z 会发生变化，变换前点的 Z 值和变换后的 Z 值并不是线性关系，下图中 `Ze` 是变换前的点，`Zn` 是变换后的点。
+透视矩阵还有个特点，是我们将平截头体的远平面向下压时，平截头体内点的 Z 会发生变化，变换前点的 Z 值和变换后的 Z 值并不是线性关系，下图中 $z_e$ 是变换前的点 $z_n$ 是变换后的点。
 
-![image](https://user-images.githubusercontent.com/25923128/122639244-6bf5c580-d12b-11eb-8076-b22fa49e8d7b.png)
+![](https://user-images.githubusercontent.com/25923128/122639244-6bf5c580-d12b-11eb-8076-b22fa49e8d7b.png)
 
 我们可以看到在近平面 Z 的精度很高而远平面 Z 的精度很低，Z 值会影响物体的先后顺序，在精度低的地方可能就会照成物体的前后顺序和实际顺序不一致。不过我们一般比较关心近平面的精度，而不关心比较远的地方，所以这种精度分布是比线性精度更好。
 
@@ -308,7 +312,7 @@ Mp = Mo * (Mp -> o)
 
 上面我们求出了投影矩阵，不过我们一般不会使用 `left, right, bottom, top, near, far` 来配置投影矩阵，而是使用更自然的 `fovy, aspect, near, far` 来配置。
 
-![image](https://user-images.githubusercontent.com/25923128/122640254-25a36500-d131-11eb-9ecb-df107f81c094.png)
+![](https://user-images.githubusercontent.com/25923128/122640254-25a36500-d131-11eb-9ecb-df107f81c094.png)
 
 - `fovy` 是 Y 轴的 `field of view` 表示平截头体顶部和底部的角度，这个角度越大看到的范围越大，物体也会越小。
 - `aspect` 是 `aspect ratio` 表示视口的宽高比，也就是上方近裁切面的宽高比。
@@ -317,51 +321,53 @@ Mp = Mo * (Mp -> o)
 
 另外平截头体会放在 X 和 Y 轴的中间，也就意味着 `right` 等于 `-left`，`top` 等于 `-bottom`。
 
-```js
-r + l = 0
-r - l = 2 * r
-
-t + b = 0
-t - b = 2 * t
-```
+$$
+r+l=0 \\
+r-l=2r \\
+t+b=0 \\
+t-b=2t
+$$
 
 我们将上面信息带入投影矩阵中。
 
-```js
-[
-  n / r, 0,     0,                  0,
-  0,     n / t, 0,                  0,
-  0,     0,     -(f + n) / (f - n), -2 * n * f / (f - n),
-  0,     0,     -1,                 0
-]
-```
+$$
+\begin{bmatrix}
+  \frac{n}{f} & 0 & 0 & 0 \\
+  0 & \frac{n}{t} & 0 & 0 \\
+  0 & 0 & -\frac{f+n}{f-n} & -\frac{2nf}{f-n} \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+$$
 
-我们先来看 ZY 平面，其中 θ 是 fovy 的角度值，我们还知道 `aspect` 是宽高比，也就是 `2r / 2t`。
+我们先来看 ZY 平面，其中 `θ` 是 `fovy` 的角度值，我们还知道 `aspect` 是宽高比，也就是 `2r / 2t`。
 
-![image](https://user-images.githubusercontent.com/25923128/122642463-16c2af80-d13d-11eb-8861-aa8b508b88af.png)
+![](https://user-images.githubusercontent.com/25923128/122642463-16c2af80-d13d-11eb-8861-aa8b508b88af.png)
 
-我们可以将 fovy 和 aspect 和投影矩阵关联起来。
+我们可以将 `fovy` 和 `aspect` 和投影矩阵关联起来。
 
-```js
-tan(θ / 2) = t / n
-
-aspect = 2r / 2t = r / t
-
-n / t = 1 / tan(θ / 2)
-
-n / r = 1 / (r / t * t / n) = 1 / (aspect * tan(θ / 2))
-```
+$$
+tab(\frac{\theta}{2}) = \frac{t}{n}
+$$
+$$
+aspect = \frac{2r}{2t} = \frac{r}{t}
+$$
+$$
+\frac{n}{t}=\frac{1}{tan(\frac{\theta}{2})}
+$$
+$$
+\frac{n}{r}=\frac{1}{\frac{r}{t}*\frac{t}{n}} = \frac{1}{aspect * tan(\frac{\theta}{2})}
+$$
 
 这样我们就得到了最终的透视投影矩阵。
 
-```js
-[
-  1 / (aspect * tan(fovy / 2)), 0, 0, 0,
-  0, 1 / tan(fovy / 2), 0, 0,
-  0, 0, -(f + n) / (f - n), -2 * n * f / (f - n),
-  0, 0, -1, 0
-]
-```
+$$
+\begin{bmatrix}
+  \frac{1}{aspect * tan(fovy / 2)} & 0 & 0 & 0 \\
+  0 & \frac{1}{tan(fovy / 2)} & 0 & 0 \\
+  0 & 0 & -\frac{f+n}{f-n} & -\frac{2nf}{f-n} \\
+  0 & 0 & -1 & 0
+\end{bmatrix}
+$$
 
 现在我们就可以将这个透视投影矩阵加入到我们的工具库中。一般 `far` 大于 `near` 大于 `0`。
 

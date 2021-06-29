@@ -49,7 +49,7 @@ gl_Position = uMat * aPos;
 
 第二步旋转相机，让它看向 -Z 位置，也就是要将相机的坐标轴和全局的坐标轴对齐。我们需要先求出相机它自己的坐标轴，如下图所示。
 
-![image](https://user-images.githubusercontent.com/25923128/122186917-19b16c00-cec1-11eb-8e56-0656ac73309e.png)
+![](https://user-images.githubusercontent.com/25923128/122186917-19b16c00-cec1-11eb-8e56-0656ac73309e.png)
 
 相机的坐标系还是[右手坐标系](/2-coordinate.md)，看向 -Z 方向。
 
@@ -57,7 +57,7 @@ gl_Position = uMat * aPos;
 
 :::info
 
-这里会用到矢量的各种计算，如果对矢量不太了解，可以回顾下[矢量和矩阵](/3-vector.md)章节。
+这里会用到矢量的各种计算，如果对矢量不太了解，可以回顾下[矢量](/3-vector.md)章节。
 
 :::
 
@@ -81,14 +81,14 @@ Y = cross(Z, X)
 
 那么旋转矩阵如下所示。
 
-```js
-rotation = [
-  Xx, Yx, Zx, 0,
-  Xy, Yy, Zy, 0,
-  Xz, Yz, Zz, 0,
-  0,  0,  0,  1
-]
-```
+$$
+\begin{bmatrix}
+  X_x & Y_x & Z_x & 0 \\
+  X_y & Y_y & Z_y & 0 \\
+  X_z & Y_z & Z_z & 0 \\
+  0 & 0 & 0 &  1
+\end{bmatrix}
+$$
 
 我们可以用上面矩阵分别乘上全局坐标的 X、Y 和 Z 轴。
 
@@ -102,38 +102,40 @@ rotation * [0, 0, 1, 0] = Z
 
 我们可以发现上面矩阵将全局坐标轴变成了相机的坐标轴。可是我们需要将相机的坐标轴变成全局的坐标轴，需要它的逆矩阵。[变换](/7-transform.md)中我们提到过旋转矩阵是正交矩阵，它的逆矩阵就是它的转置矩阵，所以我们只需要将上面矩阵转置一下，就可以获得最终的旋转矩阵。
 
-```js
-[
-  Xx, Xy, Xz, 0,
-  Yx, Yy, Yz, 0,
-  Zx, Zy, Zz, 0,
-  0,  0,  0,  1
-]
-```
+$$
+\begin{bmatrix}
+  X_x & X_y & X_Z & 0 \\
+  Y_x & Y_y & Y_z & 0 \\
+  Z_x & Z_y & Z_z & 0 \\
+  0 & 0 & 0 &  1
+\end{bmatrix}
+$$
 
 现在我们已经求出了平移和旋转矩阵，是先平移后旋转，所以我们将旋转矩阵乘上平移矩阵就是最终的视图矩阵（`viewMatrix`）了。
 
-```js
-viewMatrix = R * T
-           = [
-              Xx, Xy, Xz, 0,
-              Yx, Yy, Yz, 0,
-              Zx, Zy, Zz, 0,
-              0,  0,  0,  1
-            ] * [
-              1, 0, 0, -Px,
-              0, 1, 0, -Py,
-              0, 0, 1, -Pz,
-              0, 0, 0, 1
-            ]
-
-           = [
-             Xx, Xy, Xz, X · -P
-             Yx, Yy, Yz, Y · -P
-             Zx, Zy, Zz, Z · -P
-             0,  0,  0, 1
-           ]
-```
+$$
+\begin{aligned}
+  viewMatrix&=R*T \\
+  &=\begin{bmatrix}
+    X_x & Xy & Xz & 0 \\
+    Y_x & Yy & Yz & 0 \\
+    Z_x & Zy & Zz & 0 \\
+    0 &  0 &  0 &  1
+  \end{bmatrix}
+  \begin{bmatrix}
+    1 & 0 & 0 & -P_x \\
+    0 & 1 & 0 & -P_y \\
+    0 & 0 & 1 & -P_z \\
+    0 & 0 & 0 & 1
+  \end{bmatrix} \\
+  &=\begin{bmatrix}
+    X_x & X_y & X_z & X \cdot -P \\
+    Y_x & Y_y & Y_z & Y \cdot -P \\
+    Z_x & Z_y & Z_z & Z \cdot -P \\
+    0 & 0 & 0 & 1
+  \end{bmatrix}
+\end{aligned}
+$$
 
 我们可以将这个矩阵封装到我们的工具库中，后面就可以直接使用了。
 
