@@ -11,12 +11,14 @@ class Renderer {
   constructor() {
     this.gl = createGl()
     this.gl.enable(this.gl.DEPTH_TEST)
+    this.gl.clearColor(0, 0, 0, 0)
   }
 
-  render(scene) {
+  render(scene, { clear = true } = {}) {
     const gl = this.gl
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    if (clear) {
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    }
 
     scene.children.forEach(mesh => {
       mesh.draw(this)
