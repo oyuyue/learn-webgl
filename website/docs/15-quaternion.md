@@ -315,11 +315,91 @@ $$
 
 ### 指数形式
 
-和复数一样四元数也可以写成 $e^{q\theta}$
+和复数一样四元数，单位四元数 $u=[0,u]$ 也可以写成 $e^{u\theta}$ 形式。 对于任意四元数 $q=[cos(\theta), sin(\theta)u]$ ，那么 $log(q)=log(e^{u\theta})=[0,u\theta]$ 。我们还可以给单位四元数取 $t$ 次幂。
+
+$$
+q^t=(e^{u\theta})^t=e^{u(t\theta)}=[cos(t\theta), sin(t\theta)u]
+$$
+
+对于标量 $a$ ， $a^0=1; a^1=a$ 。$t$ 从 0 变到 1，$a^t$ 从 1 变到 $a$ 。四元数取幂也类似 $q^t$ 从 $[1,\bold{0}]$ 变化到 $q$ 。我们可以通过 $t$ 来控制旋转度数的倍数，不过需要注意 $q^8$ 可能不是原来旋转角度的 8 倍，因为四元数不能表示多圈旋转，而且它会使用最短弧表示角位移，也就是如果 $q$ 表示 30 度，$q^8$ 不会旋转 240 度，而是逆着旋转 120 度。我们可以用下面代码计算 $q^t$ 的值。
+
+```js
+function interpolate([w, x, y, z], t) {
+  // [cos(ta), sin(ta)u]
+  if (Math.abs(w) < 0.999) {
+    const alpha = Math.acos(w) // θ / 2
+    const newAlpha = alpha * t
+    w = Math.cos(newAlpha)
+    const mult = Math.sin(newAlpha) / Math.sin(alpha)
+    x *= mult
+    y *= mult
+    z *= mult
+  }
+  return [w,x,y,z]
+}
+```
 
 ### Lerp
 
+Lerp 表示线性插值它会沿着一条直线进行插值。
+
+$Lerp(q_0, q_1, t)=q_0+t(q_1-q_0)=(1-t)q_0+tq_1$
+
+![](https://user-images.githubusercontent.com/25923128/123822122-936c3f80-d92e-11eb-8a6c-907041a0b31f.png)
+
+可以看到它是沿着一条直线进行插值的，但是这样插值出来的四元数并不是单位四元数。
+
 ### Slerp
+
+四元数的一个优势就是球面线性插值 Slerp，它可以提供两个定向之间平滑的插值。它是对两个四元数的夹角进行插值，这样就可以不改变四元数的大小。
+
+和线性插值一样我们首先需要求出两个四元数之间的夹角差，上面我们已经求过了，两个四元数的差如下。
+
+$$
+\Delta q=q_1q_0^{-1}
+$$
+
+然后需要计算这个差的倍数，也就是旋转量。
+
+$$
+(\Delta q)^t
+$$
+
+然后通过四元数乘法组合来旋转 $q_0$ ，就得到夹角插值结果了。
+
+$$
+Slerp(q_0,q_1,t)=(q_1q_0^{-1})^tq_0
+$$
+
+我们还可以想象两个二维矢量，将 $v_t$ 看成是 $v_0$ 和 $v_1$ 的线性组合。
+
+![](https://user-images.githubusercontent.com/25923128/123828581-3a070f00-d934-11eb-9df3-25debac23182.png)
+
+也就是存在 $a$ 和 $b$ ，让 $v_t=av_0+bv_1$ ， 其中 $v_0$ 和 $v_1$ 都是单位矢量，我们可以做下图。
+
+![image](https://user-images.githubusercontent.com/25923128/123831146-99feb500-d936-11eb-993f-c1b04fb2ce48.png)
+
+通过上图我们可以看出来 $sin(\theta)=\frac{sin(t\theta)}{b}$ ，求得 $b=\frac{sin(t\theta)}{sin(\theta)}$ 。类似的方法我们可以求出 $a=\frac{sin((1-t)\theta)}{sin(\theta)}$ 。
+
+$$
+v_t=av_0+bv_1=\frac{sin((1-t)\theta)}{sin(\theta)}v_0+\frac{sin(t\theta)}{sin(\theta)}v_1
+$$
+
+同样的思路我们扩展到四元数空间，可以重新得到 Slerp 函数。
+
+$$
+Slerp(q_0,q_1,t)=\frac{sin((1-t)\theta)}{sin(\theta)}q_0+\frac{sin(t\theta)}{sin(\theta)}q_1
+$$
+
+其中 $\theta$ 是两个四元数之间的夹角，和二维矢量一样我们可以通过 $arccos(q_0 \cdot q_1)$ 得到。
+
+之前说过 $q$ 和 $-q$ 表示的是同一个方向，但是在 Slerp 上可能会产生不同的结果。解决方法是选择 $q_0$ 和 $q_1$ 的符号，使得 $q_0 \cdot q_1$ 非负也就是非钝角，如果点积小于 0 就反转其中一个四元数，这样就始终选择从 $q_0$ 到 $q_1$ 的最短旋弧。
+
+![](https://user-images.githubusercontent.com/25923128/123832544-075f1580-d938-11eb-9de0-fdca0c113855.png)
+
+## 二重四元数
+
+除普通的四元数外，几何代数中还衍生出来了一个二重四元数（Dual Quaternion）。它不仅能够表示 3D 旋转，还能够表示 3D 空间中的任何的刚体运动（Rigid Motion），即旋转、平移、反射和均匀缩放。和普通四元数一样，二重四元数同样可以表示为 $q=a+bi+cj+dk$ ，但是 $a, b, c, d$ 不再是实数而是[二元数](https://zh.wikipedia.org/wiki/%E4%BA%8C%E5%85%83%E6%95%B0)。
 
 ## 四元数转欧拉角
 
