@@ -113,10 +113,6 @@ $$
 
 :::
 
-### 单位四元数
-
-单位四元数表示没有旋转，有两个单位四元数，分别是 `[1 (0, 0, 0)]` 和 `[-1 (0, 0, 0)]` ，当 `θ` 是 `360` 的偶数倍时 `cos(θ / 2) = 1`，当 `θ` 是 `360` 的奇数倍时 `cos(θ / 2) = -1`。但是在数学上，只有 `[1, (0, 0, 0)]` 一个单位四元数。
-
 ### 纯四元数
 
 纯四元数是只有虚部的四元数。因为纯四元数仅由虚部，我们可以将任意的 3D 矢量转换为纯四元数。
@@ -125,7 +121,7 @@ $$
 \bold{q} = [0, \bold{v}]
 $$
 
-### 四元数大小
+### 四元数大小/模长
 
 和矢量一样四元数也有大小并且计算方式也一样。
 
@@ -146,6 +142,14 @@ $$
 
 我们使用四元数的目的是为了表示定向，所以我们这里使用的四元数都是长度为 1 的四元数。
 
+### 单位四元数
+
+如果一个四元数的大小是 1，那么这个四元数就被称为单位四元数。我们可以将一个四元数除以它的大小得到一个单位四元数。
+
+$$
+U_q = \frac{q}{\| q \| }
+$$
+
 ### 共轭和逆
 
 和复数一样四元数的共轭表示为 $\bold{q^*}$ ，它是将矢量部分变负得到的， $[w \quad (-x, -y, -z)]$ ，四元数和它的共轭表示的是相反的旋转，因为共轭是将矢量变负，也就是将翻转旋转轴，但是旋转方向没变。
@@ -156,7 +160,7 @@ $$
 \bold{q^{-1}} = \frac{q^*}{\| q\| }
 $$
 
-和标量一样，四元数乘以它的逆等于单位四元数 `[1, (0, 0, 0)]`。因为我们只关心旋转，旋转轴是单位矢量，四元数大小也是 1，所以对于我们来说四元数的逆和共轭是相等的。
+因为我们只关心旋转，旋转轴是单位矢量四元数大小也是 1，所以对于我们来说四元数的逆和共轭是相等的。
 
 ### 加法和减法
 
@@ -347,19 +351,42 @@ $Lerp(q_0, q_1, t)=q_0+t(q_1-q_0)=(1-t)q_0+tq_1$
 
 ![](https://user-images.githubusercontent.com/25923128/123822122-936c3f80-d92e-11eb-8a6c-907041a0b31f.png)
 
-可以看到它是沿着一条直线进行插值的，但是这样插值出来的四元数并不是单位四元数。我们可以用下面这个方法对两个四元数线性插值。
+可以看到它是沿着一条直线进行插值的，但是这样插值出来的四元数并不是单位四元数。
+
+### Nlerp
+
+线性插值的结果不是单位四元数，但是我们可以在插值完毕后再将它变成单位四元数，这个被称为正规化线性插值 Nlerp。
 
 ```js
 class Quat {
   static lerp(a, b, t, out = []) {
-    out[0] = a[0] + t * (b[0] - a[0])
-    out[1] = a[1] + t * (b[1] - a[1])
-    out[2] = a[2] + t * (b[2] - a[2])
-    out[3] = a[3] + t * (b[3] - a[3])
+    const ax = a[0], ay = a[1], az = a[2], aw = a[3];
+    const bx = b[0], by = b[1], bz = b[2], bw = b[3];
+    const cosom = ax * bx + ay * by + az * bz + aw * bw;
+    const k0 = 1 - t;
+    const k1 = cosom >= 0 ? t : -t;
+
+    out[0] = k0 * ax + k1 * bx
+    out[1] = k0 * ay + k1 * by
+    out[2] = k0 * az + k1 * bz
+    out[3] = k0 * aw + k1 * bw
+
+    const s = 1 / Math.hypot(out[0], out[1], out[2], out[3]) // 1 / ||out||
+    out[0] *= s
+    out[1] *= s
+    out[2] *= s
+    out[3] *= s
+
     return out
   }
 }
 ```
+
+上面代码可以对两个单位四元数进行线性插值，返回的也是单位四元数。上面代码中当两个四元数的点积小于 0 时会将其中一个四元数变负，原因请看下面的 Slerp。
+
+Nlerp 插值仍然有一定问题，当需要插值的弧比较大时，角速度会有显著的变化。下图中线性插值是等长的，但是它们的弧长完全不相等。
+
+![](https://user-images.githubusercontent.com/25923128/123914331-e0ddc080-d9b1-11eb-8d84-f568544ba3d6.png)
 
 ### Slerp
 
@@ -414,26 +441,24 @@ class Quat {
   static slerp(a, b, t, out = []) {
     const ax = a[0], ay = a[1], az = a[2], aw = a[3];
     let bx = b[0], by = b[1], bz = b[2], bw = b[3];
-    let theta, cosom, sinom, k0, k1;
+    let theta, cosom, absCosom, sinom, k0, k1;
 
     // a · b
     cosom = ax * bx + ay * by + az * bz + aw * bw;
-    if (cosom < 0) {
-      cosom = -cosom;
-      bx = -bx; by = -by; bz = -bz; bw = -bw;
-    }
-    if (1 - cosom > 0.000001) {
+    absCosom = Math.abs(cosom)
+    if (1 - absCosom > 0.000001) {
       // slerp
-      theta = Math.acos(cosom) // θ = arccos(a · b)
-      sinom = Math.sin(theta)
-      k0 = Math.sin((1.0 - t) * theta) / sinom
-      k1 = Math.sin(t * theta) / sinom
+      theta = Math.acos(absCosom) // θ = arccos(a · b)
+      sinom = 1 / Math.sin(theta)
+      k0 = Math.sin((1 - t) * theta) * sinom
+      k1 = Math.sin(t * theta) * sinom
     } else {
       // lerp
-      k0 = 1.0 - t
+      k0 = 1 - t
       k1 = t
     }
 
+    k1 = (cosom >= 0) ? k1 : -k1;
     out[0] = k0 * ax + k1 * bx
     out[1] = k0 * ay + k1 * by
     out[2] = k0 * az + k1 * bz

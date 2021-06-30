@@ -268,33 +268,46 @@ class Vec3 extends Array {
 class Quat {
 
   static lerp(a, b, t, out = []) {
-    out[0] = a[0] + t * (b[0] - a[0])
-    out[1] = a[1] + t * (b[1] - a[1])
-    out[2] = a[2] + t * (b[2] - a[2])
-    out[3] = a[3] + t * (b[3] - a[3])
+    const ax = a[0], ay = a[1], az = a[2], aw = a[3];
+    const bx = b[0], by = b[1], bz = b[2], bw = b[3];
+    const cosom = ax * bx + ay * by + az * bz + aw * bw;
+    const k0 = 1 - t;
+    const k1 = cosom >= 0 ? t : -t;
+
+    out[0] = k0 * ax + k1 * bx
+    out[1] = k0 * ay + k1 * by
+    out[2] = k0 * az + k1 * bz
+    out[3] = k0 * aw + k1 * bw
+    const s = 1 / Math.hypot(out[0], out[1], out[2], out[3])
+    out[0] *= s
+    out[1] *= s
+    out[2] *= s
+    out[3] *= s
+
     return out
   }
 
   static slerp(a, b, t, out = []) {
     const ax = a[0], ay = a[1], az = a[2], aw = a[3];
     let bx = b[0], by = b[1], bz = b[2], bw = b[3];
-    let theta, cosom, sinom, k0, k1;
+    let theta, cosom, absCosom, sinom, k0, k1;
 
+    // a · b
     cosom = ax * bx + ay * by + az * bz + aw * bw;
-    if (cosom < 0) {
-      cosom = -cosom;
-      bx = -bx; by = -by; bz = -bz; bw = -bw;
-    }
-    if (1 - cosom > 0.000001) {
-      theta = Math.acos(cosom)
-      sinom = Math.sin(theta)
-      k0 = Math.sin((1.0 - t) * theta) / sinom
-      k1 = Math.sin(t * theta) / sinom
+    absCosom = Math.abs(cosom)
+    if (1 - absCosom > 0.000001) {
+      // slerp
+      theta = Math.acos(absCosom) // θ = arccos(a · b)
+      sinom = 1 / Math.sin(theta)
+      k0 = Math.sin((1 - t) * theta) * sinom
+      k1 = Math.sin(t * theta) * sinom
     } else {
-      k0 = 1.0 - t
+      // lerp
+      k0 = 1 - t
       k1 = t
     }
 
+    k1 = (cosom >= 0) ? k1 : -k1;
     out[0] = k0 * ax + k1 * bx
     out[1] = k0 * ay + k1 * by
     out[2] = k0 * az + k1 * bz
