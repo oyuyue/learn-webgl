@@ -109,7 +109,7 @@ $$
 
 :::info
 
-这篇文章只是简单介绍下四元数，如果想深入了解四元数请阅读[这篇文章](https://krasjet.github.io/quaternion/quaternion.pdf)。
+这篇文章只是简单介绍下四元数，如果想深入了解四元数请阅读[这篇文章](https://krasjet.github.io/quaternion/quaternion.pdf)。通过[这个视频](https://www.youtube.com/watch?v=d4EgbgTm0Bg&ab_channel=3Blue1Brown)可视化四元数。[这个网站](https://eater.net/quaternions/)可以在线交互四元数。
 
 :::
 
