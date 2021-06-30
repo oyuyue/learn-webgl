@@ -347,7 +347,19 @@ $Lerp(q_0, q_1, t)=q_0+t(q_1-q_0)=(1-t)q_0+tq_1$
 
 ![](https://user-images.githubusercontent.com/25923128/123822122-936c3f80-d92e-11eb-8a6c-907041a0b31f.png)
 
-可以看到它是沿着一条直线进行插值的，但是这样插值出来的四元数并不是单位四元数。
+可以看到它是沿着一条直线进行插值的，但是这样插值出来的四元数并不是单位四元数。我们可以用下面这个方法对两个四元数线性插值。
+
+```js
+class Quat {
+  static lerp(a, b, t, out = []) {
+    out[0] = a[0] + t * (b[0] - a[0])
+    out[1] = a[1] + t * (b[1] - a[1])
+    out[2] = a[2] + t * (b[2] - a[2])
+    out[3] = a[3] + t * (b[3] - a[3])
+    return out
+  }
+}
+```
 
 ### Slerp
 
@@ -377,7 +389,7 @@ $$
 
 也就是存在 $a$ 和 $b$ ，让 $v_t=av_0+bv_1$ ， 其中 $v_0$ 和 $v_1$ 都是单位矢量，我们可以做下图。
 
-![image](https://user-images.githubusercontent.com/25923128/123831146-99feb500-d936-11eb-993f-c1b04fb2ce48.png)
+![](https://user-images.githubusercontent.com/25923128/123831146-99feb500-d936-11eb-993f-c1b04fb2ce48.png)
 
 通过上图我们可以看出来 $sin(\theta)=\frac{sin(t\theta)}{b}$ ，求得 $b=\frac{sin(t\theta)}{sin(\theta)}$ 。类似的方法我们可以求出 $a=\frac{sin((1-t)\theta)}{sin(\theta)}$ 。
 
@@ -396,6 +408,43 @@ $$
 之前说过 $q$ 和 $-q$ 表示的是同一个方向，但是在 Slerp 上可能会产生不同的结果。解决方法是选择 $q_0$ 和 $q_1$ 的符号，使得 $q_0 \cdot q_1$ 非负也就是非钝角，如果点积小于 0 就反转其中一个四元数，这样就始终选择从 $q_0$ 到 $q_1$ 的最短旋弧。
 
 ![](https://user-images.githubusercontent.com/25923128/123832544-075f1580-d938-11eb-9de0-fdca0c113855.png)
+
+```js
+class Quat {
+  static slerp(a, b, t, out = []) {
+    const ax = a[0], ay = a[1], az = a[2], aw = a[3];
+    let bx = b[0], by = b[1], bz = b[2], bw = b[3];
+    let theta, cosom, sinom, k0, k1;
+
+    // a · b
+    cosom = ax * bx + ay * by + az * bz + aw * bw;
+    if (cosom < 0) {
+      cosom = -cosom;
+      bx = -bx; by = -by; bz = -bz; bw = -bw;
+    }
+    if (1 - cosom > 0.000001) {
+      // slerp
+      theta = Math.acos(cosom) // θ = arccos(a · b)
+      sinom = Math.sin(theta)
+      k0 = Math.sin((1.0 - t) * theta) / sinom
+      k1 = Math.sin(t * theta) / sinom
+    } else {
+      // lerp
+      k0 = 1.0 - t
+      k1 = t
+    }
+
+    out[0] = k0 * ax + k1 * bx
+    out[1] = k0 * ay + k1 * by
+    out[2] = k0 * az + k1 * bz
+    out[3] = k0 * aw + k1 * bw
+
+    return out;
+  }
+}
+```
+
+我们将式子变成了上面函数，需要注意的是如果两个四元数夹角非常接近我们使用线性插值，不然 Slerp 会除 0。
 
 ## 二重四元数
 
