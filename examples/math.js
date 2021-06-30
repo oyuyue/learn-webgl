@@ -264,3 +264,56 @@ class Vec3 extends Array {
   set y(v) { this[1] = v }
   set z(v) { this[2] = v }
 }
+
+class Quat {
+
+  static lerp(a, b, t, out = []) {
+    const ax = a[0], ay = a[1], az = a[2], aw = a[3];
+    const bx = b[0], by = b[1], bz = b[2], bw = b[3];
+    const cosom = ax * bx + ay * by + az * bz + aw * bw;
+    const k0 = 1 - t;
+    const k1 = cosom >= 0 ? t : -t;
+
+    out[0] = k0 * ax + k1 * bx
+    out[1] = k0 * ay + k1 * by
+    out[2] = k0 * az + k1 * bz
+    out[3] = k0 * aw + k1 * bw
+    const s = 1 / Math.hypot(out[0], out[1], out[2], out[3])
+    out[0] *= s
+    out[1] *= s
+    out[2] *= s
+    out[3] *= s
+
+    return out
+  }
+
+  static slerp(a, b, t, out = []) {
+    const ax = a[0], ay = a[1], az = a[2], aw = a[3];
+    let bx = b[0], by = b[1], bz = b[2], bw = b[3];
+    let theta, cosom, absCosom, sinom, k0, k1;
+
+    // a · b
+    cosom = ax * bx + ay * by + az * bz + aw * bw;
+    absCosom = Math.abs(cosom)
+    if (1 - absCosom > 0.000001) {
+      // slerp
+      theta = Math.acos(absCosom) // θ = arccos(a · b)
+      sinom = 1 / Math.sin(theta)
+      k0 = Math.sin((1 - t) * theta) * sinom
+      k1 = Math.sin(t * theta) * sinom
+    } else {
+      // lerp
+      k0 = 1 - t
+      k1 = t
+    }
+
+    k1 = (cosom >= 0) ? k1 : -k1;
+    out[0] = k0 * ax + k1 * bx
+    out[1] = k0 * ay + k1 * by
+    out[2] = k0 * az + k1 * bz
+    out[3] = k0 * aw + k1 * bw
+
+    return out;
+  }
+
+}
