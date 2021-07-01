@@ -560,22 +560,183 @@ class Mat4{
 
 ## 矩阵转四元数
 
-矩阵转四元数同样还是利用上方求出的四元数矩阵。
+矩阵转四元数同样还是利用上方求出的四元数矩阵，有多种方式通过矩阵的项求解四元数的分量，我们来看一种常用的方式，因为是单位四元数，所以 $x^2+y^2+z^2+w^2=1$ 。
 
-$1+m_{00}-m_{11}-m_{22}=4x^2$
+$$
+m_{11}+m_{22}+m_{33}=3-4x^2-4y^2-4z^2=4w^2-1
+$$
 
-我们将 `1` 加矩阵第一个再减去对角线上的另外两个可以得到 $4x^2$ 。我们还可以利用矩阵的其他项得到下面这些式子。
+通过将矩阵对角线的 3 项相加可以得到的 $w$ 分量的值，通过 $w$ 分量和矩阵剩下其他项我们可以求出四元数的其他分量。
 
 $$
 \begin{aligned}
-  m_{01}+m_{10} &= 4xy \\
-  m_{02}+m_{20} &= 4xz \\
-  m_{21}+m_{12} &= 4xw
+  m_{32}-m_{23} &=2wx+2yz-2yz+2wx=4wx \\
+  m_{13}-m_{31} &=2wy+2xz-2xz+2wy=4wy \\
+  m_{21}-m_{12} &=2xy+2wz-2xy+2wz=4wz
 \end{aligned}
 $$
 
-现在我们已经求出四元数的 $x,y,z,w$ 了，但是需要将它们除去 $4x$ 。
+我们可以发现将上面式子的结果除去 $4w$ 就可以得到剩下的分量了。不过如果 $w$ 等于 $0$ ，那么就不能除 $w$ 了，我们还需要找到其他组合，通过除 x、y 或 z 来求出四元数。
+
+$$
+\begin{aligned}
+  m_{11}-m_{22}-m_{33} &=4x^2-1 \\
+  -m_{11}+m_{22}-m_{33} &=4y^2-1 \\
+  -m_{11}-m_{22}+m_{33} &=4z^2-1
+\end{aligned}
+$$
+
+为了获取稳定的四元数，我们应该选择 $x,y,z,w$ 中绝对值最大的。
+
+```js
+class Quat {
+  static fromMat3(m, out=[]) {
+    const fTrace = m[0] + m[4] + m[8];
+    let fRoot;
+
+    if (fTrace > 0) {
+      // |w| > 1/2
+      fRoot = Math.sqrt(fTrace + 1.0); // 2w
+      out[3] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot; // 1/(4w)
+      out[0] = (m[5] - m[7]) * fRoot
+      out[1] = (m[6] - m[2]) * fRoot
+      out[2] = (m[1] - m[3]) * fRoot
+    } else {
+      // |w| <= 1/2
+      let i = 0; // x
+      if (m[4] > m[0]) i = 1; // y > x
+      if (m[8] > m[i * 3 + i]) i = 2; // z > xy
+      let j = (i + 1) % 3;
+      let k = (i + 2) % 3;
+
+      fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
+      out[i] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot;
+      out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
+      out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+      out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+    }
+
+    return out
+  }
+}
+```
+
+上面代码将 `3x3` 的旋转矩阵转换成四元数。
+
+## 欧拉角转四元数
+
+将欧拉角转换成四元数和欧拉角转换成矩阵类似，我们找到绕 3 个基本轴的旋转四元数，然后将它们相乘就行了。四元数可以写成这种形式 $[cos(\frac{\theta}{2}) \quad (sin(\frac{\theta}{2})x, sin(\frac{\theta}{2})y, sin(\frac{\theta}{2})z)]$ 我们可以轻松得到 XYZ 轴旋转的四元数。
+
+$$
+\begin{aligned}
+  Y&=[cos(y/2),(sin(x/2),0,0)] \\
+  X&=[cos(x/2),(0,sin(y/2),0)] \\
+  Z&=[cos(z/2),(0,0,sin(z/2))]
+\end{aligned}
+$$
+
+然后将这三个四元数相乘就可以将欧拉角转换成四元数了，不过不同顺序的欧拉角四元数相乘的顺序也不同。
+
+```js
+class Quat {
+  static fromEuler(x, y, z, out = [], order = 'yxz') {
+    x *= 0.5; z *= 0.5; y *= 0.5;
+    const sx = Math.sin(x), cx = Math.cos(x);
+    const sy = Math.sin(y), cy = Math.cos(y);
+    const sz = Math.sin(z), cz = Math.cos(z);
+
+    switch (order) {
+      case "xyz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "xzy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yxz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yzx":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zxy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zyx":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      default:
+        throw new Error('Unknown angle order ' + order);
+    }
+
+    return out;
+  }
+}
+```
 
 ## 四元数转欧拉角
 
-## 欧拉角转四元数
+我们可以结合[上篇文章](/14-euler-gimbal.md)求出旋转矩阵和这篇文章上面求出的四元数旋转矩阵来讲四元数转换成欧拉角。
+
+$$
+\begin{bmatrix}
+  cos(H)cos(B)+sin(H)sin(P)sin(B) & sin(H)sin(P)cos(B)-sin(B)cos(H) & sin(H)cos(P) \\
+  sin(B)cos(P) & cos(P)cos(B) & -sin(P) \\
+  cos(H)sin(P)sin(B)-sin(H)cos(B) & sin(B)sin(H)+cos(H)sin(P)cos(B) & cos(H)cos(P)
+\end{bmatrix}
+$$
+
+$$
+\begin{bmatrix}
+  1-2y^2-2z^2 & 2xy-2wz & 2wy+2xz \\
+  2xy+2wz & 1-2x^2-2z^2 & 2yz-2wx \\
+  2xz-2wy & 2wx+2yz & 1-2x^2-2y^2
+\end{bmatrix}
+$$
+
+可以发现 $-sin(P) = 2yz-2wx$ 那么 $p=arcsin(-2(yz-wx))$ ，和上篇文章一样的我们可以通过矩阵的其他项分别求出 Heading 和 Bank，还有处理 Patch 为正负 90 度的时候。
+
+```js
+class Quat {
+  static toEuler([x, y, z, w], out = []) {
+    const sp = -2 * (y * z - w * x)
+
+    if (Math.abs(sp) < 0.99999) {
+      out[0] = Math.asin(sp)
+      out[1] = Math.atan2(x * z + w * y, 0.5 - x * x - y * y)
+      out[2] = Math.atan2(x * y + w * z, 0.5 - x * x - z * z)
+    } else {
+      out[0] = Math.PI * (sp < 0 ? -0.5 : 0.5)
+      out[1] = Math.atan2(w * y - x * z, 0.5 - y * y - z * z)
+      out[2] = 0
+    }
+
+    return out // [x, y, z]
+  }
+}
+```

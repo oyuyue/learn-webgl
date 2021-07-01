@@ -363,4 +363,91 @@ class Quat {
     return out;
   }
 
+  static fromMat3(m, out=[]) {
+    const fTrace = m[0] + m[4] + m[8];
+    let fRoot;
+
+    if (fTrace > 0) {
+      // |w| > 1/2
+      fRoot = Math.sqrt(fTrace + 1.0); // 2w
+      out[3] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot; // 1/(4w)
+      out[0] = (m[5] - m[7]) * fRoot
+      out[1] = (m[6] - m[2]) * fRoot
+      out[2] = (m[1] - m[3]) * fRoot
+    } else {
+      // |w| <= 1/2
+      let i = 0; // x
+      if (m[4] > m[0]) i = 1; // y > x
+      if (m[8] > m[i * 3 + i]) i = 2; // z > xy
+      let j = (i + 1) % 3;
+      let k = (i + 2) % 3;
+
+      fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
+      out[i] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot;
+      out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
+      out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+      out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+    }
+
+    return out
+  }
+
+  static fromEuler(x, y, z, out = [], order = 'yxz') {
+    x *= 0.5; z *= 0.5; y *= 0.5;
+    const sx = Math.sin(x), cx = Math.cos(x);
+    const sy = Math.sin(y), cy = Math.cos(y);
+    const sz = Math.sin(z), cz = Math.cos(z);
+
+    switch (order) {
+      case "xyz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "xzy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yxz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yzx":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zxy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zyx":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      default:
+        throw new Error('Unknown angle order ' + order);
+    }
+
+    return out;
+  }
+
 }

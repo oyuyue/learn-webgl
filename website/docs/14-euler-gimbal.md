@@ -221,6 +221,33 @@ class Mat4 {
 
 ## 矩阵转欧拉角
 
-将矩阵转换成欧拉角也比较直接，观察上面我们求出来的 HPB 顺序的旋转矩阵，我们可以用 m32 求出 Pitch，m31 和 m33 求出 Heading，m12 和 m22 求出 Bank。
+上面我们求出来的 HPB 顺序的旋转矩阵，我们可以利用 m23 求出 Pitch。
 
+$$
+\begin{aligned}
+  m_{23} &= -sin(p) \\
+  arcsin(-m_{23}) = p
+\end{aligned}
+$$
 
+将 m13 和 m33 除去 $cos(p)$ 我们可以得到 $sin(h)$ 和 $cos(h)$ 通过这两项就可以求出 Heading。类似的方法通过 m21 和 m22 我们可以求出 Bank。需要注意我们返回的欧拉角应该是规范欧拉角，所以当 Patch 等于正负 90 度时，Bank 为 0，也就是 $cos(p)=0;b=0;sin(b)=0;cos(b)=1$ 这个时候我们可以通过 m11 和 m31 来求 Heading。
+
+```js
+class Mat4 {
+  static getEuler(m, out = []) {
+    out[0] = Math.asin(-Math.min(Math.max(m[9], -1), 1))
+
+    if (Math.abs(m[9]) < 0.99999) {
+      out[1] = Math.atan2(m[8], m[10])
+      out[2] = Math.atan2(m[1], m[5])
+    } else {
+      out[1] = Math.atan2(-m[2], m[0])
+      out[2] = 0
+    }
+
+    return out // [x, y, z]
+  }
+}
+```
+
+上面代码中我将 Patch 限制在正负 90 度，而且 `Math.asin` 和 `Math.atan2` 返回的弧度正好满足规范欧拉角。
