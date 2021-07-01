@@ -226,7 +226,7 @@ class Mat4 {
 $$
 \begin{aligned}
   m_{23} &= -sin(p) \\
-  arcsin(-m_{23}) = p
+  arcsin(-m_{23}) &= p
 \end{aligned}
 $$
 
