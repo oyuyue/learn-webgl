@@ -541,7 +541,7 @@ $$
 \begin{bmatrix}
   N_x^2(1-cos(\theta))+cos(\theta) & N_xN_y(1-cos(\theta))-N_zsin(\theta) & N_xN_z(1-cos(\theta))+N_ysin(\theta) & 0 \\
   N_xN_y(1-cos(\theta))+N_zsin(\theta) & N_y^2(1-cos(\theta))+cos(\theta) & N_yN_z(1-cos(\theta))-N_xsin(\theta) & 0 \\
-  N_xN_z(1-cos(\theta))-N_ysin(\theta) & N_yN_z(1-cos(\theta))+N_xsin(\theta) & N_Z^2(1-cos(\theta))+cos(\theta) & 0 \\
+  N_xN_z(1-cos(\theta))-N_ysin(\theta) & N_yN_z(1-cos(\theta))+N_xsin(\theta) & N_z^2(1-cos(\theta))+cos(\theta) & 0 \\
   0 & 0 & 0 & 1
 \end{bmatrix}
 $$

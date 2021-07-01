@@ -162,15 +162,65 @@ $$
 
 ## 欧拉角转矩阵
 
-因为欧拉角是围绕坐标轴的旋转，在[变换](/7-transform.md)中我们求出了三个基本轴的矩阵，所以将欧拉角转换成矩阵就是将这三个旋转矩阵结合起来。
+因为欧拉角是围绕坐标轴的旋转，在[变换](/7-transform.md)中我们求出了绕三个基本轴的旋转矩阵，所以将欧拉角转换成矩阵就是将这三个旋转矩阵结合起来。
 
 $$
 \begin{aligned}
   R &= R_y(H) * R_x(P) * R_z(B) \\
-
+  &=
+  \begin{bmatrix}
+   cos(H) & 0 & sin(H) \\
+   0 & 1 & 0 \\
+   -sin(H) & 0 & cos(H)
+  \end{bmatrix}
+  \begin{bmatrix}
+    1 & 0 & 0 \\
+    0 & cos(P) & -sin(P) \\
+    0 & sin(P) & cos(P)
+  \end{bmatrix}
+  \begin{bmatrix}
+    cos(B) & -sin(B) & 0 \\
+    sin(B) & cos(B) & 0 \\
+    0 & 0 & 1
+  \end{bmatrix} \\
+  &= \begin{bmatrix}
+    cos(H)cos(B)+sin(H)sin(P)sin(B) & sin(H)sin(P)cos(B)-sin(B)cos(H) & sin(H)cos(P) \\
+    sin(B)cos(P) & cos(P)cos(B) & -sin(P) \\
+    cos(H)sin(P)sin(B)-sin(H)cos(B) & sin(B)sin(H)+cos(H)sin(P)cos(B) & cos(H)cos(P)
+  \end{bmatrix}
 \end{aligned}
 $$
 
+因为我们只关注旋转所以用 `3x3` 的旋转矩阵就行了，旋转顺序是偏航-俯仰-翻滚。
+
+```js
+class Mat4 {
+  static fromHPB(h, p, b, out = []) {
+    const ch = Math.cos(h), cb = Math.cos(b), cp = Math.cos(p);
+    const sh = Math.sin(h), sb = Math.sin(b), sp = Math.sin(p);
+    out[0] = ch * cb + sh * sp * sb
+    out[1] = sb * cp
+    out[2] = ch * sp * sb - sh * cb
+    out[3] = 0
+    out[4] = sh * sp * cb - sb * ch
+    out[5] = cp * cb
+    out[6] = sb * sh + ch * sp * cb
+    out[7] = 0
+    out[8] = sh * cp
+    out[9] = -sp
+    out[10] = ch * cp
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+}
+```
+
 ## 矩阵转欧拉角
 
-将矩阵转换成欧拉角也比较直接，我们可以通过上面求出来的旋转矩阵中的 m32 求出 Pitch，m31 和 m33 求出 Heading，m12 和 m22 求出 Bank。
+将矩阵转换成欧拉角也比较直接，观察上面我们求出来的 HPB 顺序的旋转矩阵，我们可以用 m32 求出 Pitch，m31 和 m33 求出 Heading，m12 和 m22 求出 Bank。
+
+

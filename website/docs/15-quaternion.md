@@ -290,6 +290,46 @@ $$
 \end{aligned}
 $$
 
+### 旋转的矩阵形式
+
+我们还可以将 $v'=qvq^*$ 写成矩阵形式，在上面乘法小节中我们求出四元数的左乘和右乘矩阵形式。将 $v$ 右乘 $q^*$ 和左乘 $q$ 的矩阵形式就可以得到的 $v'$ ，那么 $q$ 和 $q*$ 矩阵形式相乘就可以得到四元数 $q$ 表示的旋转矩阵形式了。 $q=a+bi+cj+dk$ 并且 $a^2+b^2+c^2+d^2=1$ 我们可以得出如下矩阵。
+
+$$
+\begin{aligned}
+qvq^*&=L(q)R(q^*)v \\
+&=\begin{bmatrix}
+   a & -b & -c & -d \\
+   b & a & -d & c \\
+   c & d & a & -b \\
+   d & -c & b & a
+\end{bmatrix}
+\begin{bmatrix}
+   a & b & c & d \\
+   -b & a & -d & c \\
+   -c & d & a & -b \\
+   -d & -c & b & a
+\end{bmatrix}
+  v \\
+  &=\begin{bmatrix}
+    1 & 0 & 0 & 0 \\
+    0 & 1-2c^2-2d^2 & 2bc-2ad & 2ac+2bd \\
+    0 & 2bc+2ad & 1-2b^2-2d^2 & 2cd-2ab \\
+    0 & 2bd-2ac & 2ab+2cd & 1-2b^2-2c^2
+  \end{bmatrix}
+  v
+\end{aligned}
+$$
+
+矩阵的最外圈不会对 $v$ 进行任何变换，所以提取上方矩阵中 `3x3` 旋转的部分，就是四元数 3D 旋转矩阵形式了。
+
+$$
+\begin{bmatrix}
+  1-2c^2-2d^2 & 2bc-2ad & 2ac+2bd \\
+  2bc+2ad & 1-2b^2-2d^2 & 2cd-2ab \\
+  2bd-2ac & 2ab+2cd & 1-2b^2-2c^2
+\end{bmatrix}
+$$
+
 ### 旋转差
 
 我们还可以利用四元数乘法计算两个四元数之间的差值，也就是一个方向旋转到另一个方向的角位移。 $da=b$ 中 $d$ 就是 $a$ 旋转到 $b$ 的角位移。
@@ -475,10 +515,67 @@ class Quat {
 
 除普通的四元数外，几何代数中还衍生出来了一个二重四元数（Dual Quaternion）。它不仅能够表示 3D 旋转，还能够表示 3D 空间中的任何的刚体运动（Rigid Motion），即旋转、平移、反射和均匀缩放。和普通四元数一样，二重四元数同样可以表示为 $q=a+bi+cj+dk$ ，但是 $a, b, c, d$ 不再是实数而是[二元数](https://zh.wikipedia.org/wiki/%E4%BA%8C%E5%85%83%E6%95%B0)。
 
+## 四元数转矩阵
+
+上面我们已经求出四元数 3D 旋转矩阵形式。
+
+$$
+\begin{bmatrix}
+  1-2y^2-2z^2 & 2xy-2wz & 2wy+2xz \\
+  2xy+2wz & 1-2x^2-2z^2 & 2yz-2wx \\
+  2xz-2wy & 2wx+2yz & 1-2x^2-2y^2
+\end{bmatrix}
+$$
+
+所以直接将这个矩阵变成代码就行了。
+
+```js
+class Mat4{
+  static fromQuat([x, y, z, w], out = []) {
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, yy = y * y2, zz = z * z2;
+    const yx = y * x2, zx = z * x2, zy = z * y2;
+    const wx = w * x2, wy = w * y2, wz = w * z2;
+
+    out[0] = 1 - yy - zz
+    out[1] = yx + wz
+    out[2] = zx - wy
+    out[3] = 0
+    out[4] = yx - wz
+    out[5] = 1 - xx - zz
+    out[6] = zy + wx
+    out[7] = 0
+    out[8] = zx + wy
+    out[9] = zy - wx
+    out[10] = 1 - xx - yy
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+}
+```
+
+## 矩阵转四元数
+
+矩阵转四元数同样还是利用上方求出的四元数矩阵。
+
+$1+m_{00}-m_{11}-m_{22}=4x^2$
+
+我们将 `1` 加矩阵第一个再减去对角线上的另外两个可以得到 $4x^2$ 。我们还可以利用矩阵的其他项得到下面这些式子。
+
+$$
+\begin{aligned}
+  m_{01}+m_{10} &= 4xy \\
+  m_{02}+m_{20} &= 4xz \\
+  m_{21}+m_{12} &= 4xw
+\end{aligned}
+$$
+
+现在我们已经求出四元数的 $x,y,z,w$ 了，但是需要将它们除去 $4x$ 。
+
 ## 四元数转欧拉角
 
 ## 欧拉角转四元数
-
-## 四元数转矩阵
-
-## 矩阵转四元数

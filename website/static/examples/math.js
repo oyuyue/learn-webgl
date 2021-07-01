@@ -249,6 +249,53 @@ class Mat4 {
     return out;
   }
 
+  static fromHPB(h, p, b, out = []) {
+    const ch = Math.cos(h), cb = Math.cos(b), cp = Math.cos(p);
+    const sh = Math.sin(h), sb = Math.sin(b), sp = Math.sin(p);
+    out[0] = ch * cb + sh * sp * sb
+    out[1] = sb * cp
+    out[2] = ch * sp * sb - sh * cb
+    out[3] = 0
+    out[4] = sh * sp * cb - sb * ch
+    out[5] = cp * cb
+    out[6] = sb * sh + ch * sp * cb
+    out[7] = 0
+    out[8] = sh * cp
+    out[9] = -sp
+    out[10] = ch * cp
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+
+  static fromQuat([x, y, z, w], out = []) {
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, yy = y * y2, zz = z * z2;
+    const yx = y * x2, zx = z * x2, zy = z * y2;
+    const wx = w * x2, wy = w * y2, wz = w * z2;
+
+    out[0] = 1 - yy - zz
+    out[1] = yx + wz
+    out[2] = zx - wy
+    out[3] = 0
+    out[4] = yx - wz
+    out[5] = 1 - xx - zz
+    out[6] = zy + wx
+    out[7] = 0
+    out[8] = zx + wy
+    out[9] = zy - wx
+    out[10] = 1 - xx - yy
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+
 }
 
 class Vec3 extends Array {
