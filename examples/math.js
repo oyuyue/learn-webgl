@@ -249,6 +249,53 @@ class Mat4 {
     return out;
   }
 
+  static fromHPB(h, p, b, out = []) {
+    const ch = Math.cos(h), cb = Math.cos(b), cp = Math.cos(p);
+    const sh = Math.sin(h), sb = Math.sin(b), sp = Math.sin(p);
+    out[0] = ch * cb + sh * sp * sb
+    out[1] = sb * cp
+    out[2] = ch * sp * sb - sh * cb
+    out[3] = 0
+    out[4] = sh * sp * cb - sb * ch
+    out[5] = cp * cb
+    out[6] = sb * sh + ch * sp * cb
+    out[7] = 0
+    out[8] = sh * cp
+    out[9] = -sp
+    out[10] = ch * cp
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+
+  static fromQuat([x, y, z, w], out = []) {
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, yy = y * y2, zz = z * z2;
+    const yx = y * x2, zx = z * x2, zy = z * y2;
+    const wx = w * x2, wy = w * y2, wz = w * z2;
+
+    out[0] = 1 - yy - zz
+    out[1] = yx + wz
+    out[2] = zx - wy
+    out[3] = 0
+    out[4] = yx - wz
+    out[5] = 1 - xx - zz
+    out[6] = zy + wx
+    out[7] = 0
+    out[8] = zx + wy
+    out[9] = zy - wx
+    out[10] = 1 - xx - yy
+    out[11] = 0
+    out[12] = 0
+    out[13] = 0
+    out[14] = 0
+    out[15] = 1
+    return out
+  }
+
 }
 
 class Vec3 extends Array {
@@ -312,6 +359,93 @@ class Quat {
     out[1] = k0 * ay + k1 * by
     out[2] = k0 * az + k1 * bz
     out[3] = k0 * aw + k1 * bw
+
+    return out;
+  }
+
+  static fromMat3(m, out=[]) {
+    const fTrace = m[0] + m[4] + m[8];
+    let fRoot;
+
+    if (fTrace > 0) {
+      // |w| > 1/2
+      fRoot = Math.sqrt(fTrace + 1.0); // 2w
+      out[3] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot; // 1/(4w)
+      out[0] = (m[5] - m[7]) * fRoot
+      out[1] = (m[6] - m[2]) * fRoot
+      out[2] = (m[1] - m[3]) * fRoot
+    } else {
+      // |w| <= 1/2
+      let i = 0; // x
+      if (m[4] > m[0]) i = 1; // y > x
+      if (m[8] > m[i * 3 + i]) i = 2; // z > xy
+      let j = (i + 1) % 3;
+      let k = (i + 2) % 3;
+
+      fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
+      out[i] = 0.5 * fRoot;
+      fRoot = 0.5 / fRoot;
+      out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
+      out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+      out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+    }
+
+    return out
+  }
+
+  static fromEuler(x, y, z, out = [], order = 'yxz') {
+    x *= 0.5; z *= 0.5; y *= 0.5;
+    const sx = Math.sin(x), cx = Math.cos(x);
+    const sy = Math.sin(y), cy = Math.cos(y);
+    const sz = Math.sin(z), cz = Math.cos(z);
+
+    switch (order) {
+      case "xyz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "xzy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yxz":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz - sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      case "yzx":
+        out[0] = sx * cy * cz + cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zxy":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz + sx * sy * cz;
+        out[3] = cx * cy * cz - sx * sy * sz;
+        break;
+
+      case "zyx":
+        out[0] = sx * cy * cz - cx * sy * sz;
+        out[1] = cx * sy * cz + sx * cy * sz;
+        out[2] = cx * cy * sz - sx * sy * cz;
+        out[3] = cx * cy * cz + sx * sy * sz;
+        break;
+
+      default:
+        throw new Error('Unknown angle order ' + order);
+    }
 
     return out;
   }
