@@ -631,8 +631,8 @@ class Quat {
 
 $$
 \begin{aligned}
-  Y&=[cos(y/2),(sin(x/2),0,0)] \\
-  X&=[cos(x/2),(0,sin(y/2),0)] \\
+  X&=[cos(x/2),(sin(x/2),0,0)] \\
+  Y&=[cos(y/2),(0,sin(y/2),0)] \\
   Z&=[cos(z/2),(0,0,sin(z/2))]
 \end{aligned}
 $$
