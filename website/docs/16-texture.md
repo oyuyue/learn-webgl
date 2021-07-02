@@ -2,11 +2,10 @@
 
 纹理（Texture）是一张图片，它可以贴在模型的表面就像皮肤一样。除了图像之外它还可以存储其他数据，这将在后面章节中详细讲解。
 
-```js run
+```js {10,13,18-19,22,35-38} run
 const image = new Image()
-image.crossOrigin=''
-image.onload=() => render(image)
-image.src='http://localhost:3000/learn-webgl/img/uv.jpg'
+image.onload = () => render(image)
+image.src = `${location.origin}/learn-webgl/img/uv.jpg`
 
 function render(image) {
   const gl = createGl()
@@ -30,12 +29,8 @@ function render(image) {
   `)
 
   const [posLoc, posBuffer] = createAttrBuffer(gl, program, 'pos', new Float32Array([
-    0.0,  0.0,
-    1.0,  0.0,
-    0.0,  1.0,
-    0.0,  1.0,
-    1.0,  0.0,
-    1.0,  1.0,
+    0, 0, 1, 0, 1, 1,
+    0, 0, 1, 1, 0, 1
   ]))
 
   gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer)
@@ -44,10 +39,7 @@ function render(image) {
 
   const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
 
   gl.clearColor(0, 0, 0, 0)
@@ -82,6 +74,13 @@ function createAttrBuffer(gl, program, attr, data) {
 }
 ```
 
+上面代码将下面这张图片使用 WebGL 渲染出来。
+
+![](/img/uv.jpg)
+
+和颜色值一样图片的宽度和高度值的范围是 `0` 到 `1`。而且期望图片原点在左下角，但是一般图片在原点在左上角，这也是为什么渲染的结果和实际图片是上下颠倒的。
+
+上面代码中首先指定了两个三角形的 6 个顶点，用它们组合成一个正方形。然后创建一个纹理，将纹理绑定的到 `TEXTURE_2D` 上，使用 `texParameteri` 设置纹理渲染方式，最后使用 `texImage2D` 设置图片数据，这个流程和传入顶点坐标很相似，首先创建 `Buffer` 然后绑定 `Buffer` 最后设置顶点数据到 `Buffer`。
 
 
 
